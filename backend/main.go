@@ -47,7 +47,7 @@ func main() {
 		DBName:    "coffee_dog",
 		User:      "root",
 		Passwd:    mysql_root_password,
-		Addr:      "127.0.0.1:3306",
+		Addr:      "mysql_host:3306",
 		Net:       "tcp",
 		ParseTime: true,
     AllowNativePasswords: true,
@@ -60,6 +60,16 @@ func main() {
 	if err != nil {
 		log.Printf("sql.Open error %s", err)
 	}
+  // mysqlの起動を待つ
+  for {
+		err := db.Ping()
+		if err == nil {
+			break
+		}
+		log.Print(err)
+		time.Sleep(time.Second * 2)
+	}
+
 	var sales []Sale
 	err = db.Select(&sales, `SELECT * FROM sales;`)
 	if err != nil {
