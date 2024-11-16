@@ -20,3 +20,5 @@ services:
     container_name: backend
     ports:
       - 1323:1323
+    depends_on:
+      - "db"
