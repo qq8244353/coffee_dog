@@ -9,16 +9,26 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: coffee_dog
-      TZ: 'Asia/Tokyo'
+      TZ: Asia/Tokyo
     volumes:
       - ./db/my.cnf:/etc/mysql/conf.d/my.cnf
       - ./db/init:/docker-entrypoint-initdb.d/
+    expose:
+      - 3306
     ports:
       - 3306:3306
+
   backend:
     build: backend
     container_name: backend
+    env_file:
+      - .env
     ports:
       - 1323:1323
     depends_on:
-      - "db"
+      - db
+
+networks:
+  default:
+    name: coffee_dog_default
+    external: true
