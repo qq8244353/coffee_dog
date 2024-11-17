@@ -6,7 +6,9 @@ import { useState, useEffect } from 'react';
 
 function OrderView() {
   const [ waitingOrders, setWaitingOrders ] = useState(null)
-  const [ isPending, setIsPending ] = useState(true)
+  const [ waitingOrdersPending, setWaitingOrdersPending ] = useState(true)
+  const [ callingOrders, setCallingOrders ] = useState(null)
+  const [ callingOrdersPending, setCallingOrdersPending ] = useState(true)
   useEffect(() => {
     fetch('http://127.0.0.1:1324/waiting-orders')
     .then(res => {
@@ -14,7 +16,15 @@ function OrderView() {
     })
     .then(data => {
       setWaitingOrders(data)
-      setIsPending(false)
+      setWaitingOrdersPending(false)
+    })
+    fetch('http://127.0.0.1:1324/calling-orders')
+    .then(res => {
+      return res.json()
+    })
+    .then(data => {
+      setCallingOrders(data)
+      setCallingOrdersPending(false)
     })
       
       
@@ -40,8 +50,19 @@ function OrderView() {
             justify-content: flex-start;
           `}
         >
-          { isPending && <div> Loading... </div> }
-          { !isPending && <div> Loaded </div> }
+          { callingOrdersPending && <div> Loading... </div> }
+          { !callingOrdersPending && callingOrders.map(order => (
+            <div 
+              className="callingOrder"
+              key={order.sale_id}
+              css={css`
+                width: 5em;
+                height: 5em;
+              `}
+            >
+              <p>{order.sale_id}</p>
+            </div>
+          ))}
         </Flex>
         <Flex
           containerCss={css`
@@ -51,8 +72,8 @@ function OrderView() {
             justify-content: flex-start;
           `}
         >
-          { isPending && <div> Loading... </div> }
-          { !isPending && waitingOrders.map(order => (
+          { waitingOrdersPending && <div> Loading... </div> }
+          { !waitingOrdersPending && waitingOrders.map(order => (
             <div 
               className="waitingOrder"
               key={order.sale_id}
@@ -63,7 +84,7 @@ function OrderView() {
             >
               <p>{order.sale_id}</p>
             </div>
-            ))}
+          ))}
         </Flex>
       </Flex>
     </>
