@@ -5,8 +5,7 @@ import (
 	"net/http"
 	"os"
   "fmt"
-
-	"github.com/jmoiron/sqlx"
+"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 
@@ -34,24 +33,13 @@ var db *sqlx.DB
 
 type WaitingOrder struct {
 	SaleId           int       `json:"sale_id"`
-	time             time.Time `json:"time"`
+	Time             time.Time `json:"time"`
 }
 
 type CallingOrder struct {
 	SaleId           int       `json:"sale_id"`
-	time             time.Time `json:"time"`
+	Time             time.Time `json:"time"`
 }
-
-// func get_waiting_orders(*db) {
-// 	var sales []Sale
-// 	err = db.Select(&sales, `SELECT * FROM sales WHERE NOT is_handed_over;`)
-// 	if err != nil {
-// 		log.Printf("sql.Open error %s", err)
-// 	}
-//   for _, sale := range sales {
-//     log.Printf("%v", sale)
-//   }
-// }
 
 func main() {
   _, dev := os.LookupEnv("DEV")
@@ -118,9 +106,13 @@ func main() {
 	if err != nil {
 		log.Printf("sql.Open error %s", err)
 	}
+  sales_ids := []int{}
   for _, sale := range sales {
+    sales_ids = append(sales_ids, sale.SaleId)
     log.Printf("%v", sale)
   }
+
+  log.Printf("%v", sales_ids)
   e.Logger.Fatal(e.Start(server_port))
 }
 
@@ -131,7 +123,20 @@ func hello(c echo.Context) error {
 
 // Handler
 func waiting_orders(c echo.Context) error {
-	return c.JSON(http.StatusOK, "Hello, World!")
+	var sales []Sale
+  // registered は True である
+  err := db.Select(&sales, `SELECT * FROM sales WHERE NOT is_created AND NOT is_canceled;`)
+	if err != nil {
+		log.Printf("sql.Open error %s", err)
+	}
+  waiting_orders := []WaitingOrder{}
+  for _, sale := range sales {
+    waiting_orders = append(waiting_orders, WaitingOrder{
+      SaleId: sale.SaleId,
+      Time: sale.RegisteredAt,
+    })
+  }
+	return c.JSON(http.StatusOK, waiting_orders)
 }
 
 func calling_orders(c echo.Context) error {
