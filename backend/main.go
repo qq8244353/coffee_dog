@@ -62,7 +62,7 @@ func main() {
 
 	// Routes
 	e.GET("/", hello)
-  e.GET("/waiting-orders", waiting_orders)
+  e.GET("/waiting-orders", waiting_orders_handler)
   e.GET("/calling-orders", calling_orders)
 
 
@@ -122,7 +122,7 @@ func hello(c echo.Context) error {
 }
 
 // Handler
-func waiting_orders(c echo.Context) error {
+func waiting_orders_handler(c echo.Context) error {
 	var sales []Sale
   // registered は True である
   err := db.Select(&sales, `SELECT * FROM sales WHERE NOT is_created AND NOT is_canceled;`)
@@ -136,6 +136,8 @@ func waiting_orders(c echo.Context) error {
       Time: sale.RegisteredAt,
     })
   }
+  // debug
+  c.Response().Header().Set(echo.HeaderAccessControlAllowOrigin, "*")
 	return c.JSON(http.StatusOK, waiting_orders)
 }
 
