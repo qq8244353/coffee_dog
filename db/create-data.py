@@ -59,11 +59,6 @@ for i in range(l):
 for i in range(l):
     registered_at, created_at, handed_over_at, canceled_at = get_random_date()
     d = [ i for i in range(14) ]
-    d[0] = id;
-    id += 1
-    d[1] = sale_id
-    if rd.randint(0, 10) >= 1:
-        sale_id += 1
     d[2] = item_ids[rd.randint(0, 5)]
     d[3] = rd.randint(0, 23)
     d[4] = registered_at
