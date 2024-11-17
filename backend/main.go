@@ -15,17 +15,22 @@ import (
 )
 
 type Sale struct {
-	SaleId           int       `db:"sale_id"`
-	ItemId           int       `db:"item_id"`
-	RegisterPersonId int       `db:"register_person_id"`
-	RegisteredAt     time.Time `db:"registered_at"`
-	IsHandedOver     bool      `db:"is_handed_over"`
+  Id               int        `db:"id"`
+	SaleId           int        `db:"sale_id"`
+	ItemId           int        `db:"item_id"`
+	RegisterPersonId int        `db:"register_person_id"`
+	RegisteredAt     time.Time  `db:"registered_at"`
+  IsCreated        bool       `db:"is_created"`
+  CreatePersonId   *int       `db:"create_person_id"`
+	CreatedAt        *time.Time `db:"created_at"`
+	IsHandedOver     bool       `db:"is_handed_over"`
 	HandOverPersonId *int       `db:"hand_over_person_id"`
 	HandedOverAt     *time.Time `db:"handed_over_at"`
-	IsCanceled       bool      `db:"is_canceled"`
+	IsCanceled       bool       `db:"is_canceled"`
 	CancelPersonId   *int       `db:"cancel_person_id"`
 	CanceledAt       *time.Time `db:"canceled_at"`
 }
+var db *sqlx.DB
 
 type WaitingOrder struct {
 	SaleId           int       `json:"sale_id"`
@@ -36,6 +41,17 @@ type CallingOrder struct {
 	SaleId           int       `json:"sale_id"`
 	time             time.Time `json:"time"`
 }
+
+// func get_waiting_orders(*db) {
+// 	var sales []Sale
+// 	err = db.Select(&sales, `SELECT * FROM sales WHERE NOT is_handed_over;`)
+// 	if err != nil {
+// 		log.Printf("sql.Open error %s", err)
+// 	}
+//   for _, sale := range sales {
+//     log.Printf("%v", sale)
+//   }
+// }
 
 func main() {
   _, dev := os.LookupEnv("DEV")
@@ -83,7 +99,7 @@ func main() {
 	}
 
   log.Printf("%s", cfg.FormatDSN())
-	db, err := sqlx.Open("mysql", cfg.FormatDSN())
+	db, err = sqlx.Open("mysql", cfg.FormatDSN())
 	if err != nil {
 		log.Printf("sql.Open error %s", err)
 	}
