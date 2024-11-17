@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
@@ -208,11 +209,27 @@ func put_admin_orders_handler(c echo.Context) error {
 	if err != nil {
 		return c.String(http.StatusBadRequest, "bad request")
 	}
-  log.Printf("%d", admin_update.SaleId)
-  res, err := db.Exec(`UPDATE sales SET is_created = TRUE WHERE sale_id = ?`, admin_update.SaleId)
-	if err != nil {
-    log.Printf("%s", err)
-		return c.String(http.StatusInternalServerError, "internal server error")
+	log.Printf("%d", admin_update.SaleId)
+	log.Printf("%s", admin_update.Kind)
+	var res sql.Result
+	if admin_update.Kind == "created" {
+		res, err = db.Exec(`UPDATE sales SET is_created = TRUE WHERE sale_id = ?`, admin_update.SaleId)
+		if err != nil {
+			log.Printf("%s", err)
+			return c.String(http.StatusInternalServerError, "internal server error")
+		}
+	} else if admin_update.Kind == "handed over" {
+		res, err = db.Exec(`UPDATE sales SET is_handed_over = TRUE WHERE sale_id = ?`, admin_update.SaleId)
+		if err != nil {
+			log.Printf("%s", err)
+			return c.String(http.StatusInternalServerError, "internal server error")
+		}
+	} else if admin_update.Kind == "canceled" {
+		res, err = db.Exec(`UPDATE sales SET is_canceled = TRUE WHERE sale_id = ?`, admin_update.SaleId)
+		if err != nil {
+			log.Printf("%s", err)
+			return c.String(http.StatusInternalServerError, "internal server error")
+		}
 	}
 	log.Printf("%v", res)
 	return c.String(http.StatusOK, "Success")
