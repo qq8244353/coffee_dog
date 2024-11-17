@@ -2,6 +2,7 @@
 import { css } from '@emotion/react'
 import Header from './Header'
 import Flex from './components/Flex';
+import AdminButton from './components/AdminButton';
 import { useState, useEffect } from 'react';
 
 function Admin() {
@@ -60,33 +61,9 @@ function Admin() {
                   return <p>受け渡し完了</p>
                 }
               })()}
-              <button onClick={() => {
-                fetch('http://127.0.0.1:1324/admin-orders', {
-                  method: "PUT",
-                  headers: {
-                    'Content-Type': 'application/json'
-                  },
-                  body: JSON.stringify({
-                    sale_id: order.sale_id,
-                    kind: 'created'
-                  })
-                })
-                .then(res => {
-                  if (res.ok) {
-                    return res.json()
-                  } else {
-                      console.log(res.text())
-                  }
-                })
-                .then(data => {
-                    console.log(data)
-                })
-                .catch(err => {
-                  console.log(err)
-                })
-              }}>完成</button>
-              <button>受け渡し完了</button>
-              <button>削除</button>
+              <AdminButton name="完成" endpoint="created" saleId={order.sale_id}/>
+              <AdminButton name="受け渡し完了" endpoint="handed over" saleId={order.sale_id}/>
+              <AdminButton name="削除" endpoint="canceled" saleId={order.sale_id}/>
             </Flex>
           ))}
         </Flex>
