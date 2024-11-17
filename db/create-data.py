@@ -37,7 +37,6 @@ item_ids = [ 10, 11, 20, 30, 31, 41 ]
 
 l = 10
 sale_id = 0
-id = 0
 # waiting
 for i in range(l):
     registered_at, created_at, handed_over_at, canceled_at = get_random_date()
@@ -109,18 +108,16 @@ for i in range(l):
 
 sales = sorted(sales, key=lambda x: x[4])
 for d in sales:
-    d[0] = id;
-    id += 1
     d[1] = sale_id
     if rd.randint(0, 10) >= 1:
         sale_id += 1
 
-print(f'INSERT INTO sales\n  (id, sale_id, item_id, register_person_id, registered_at, is_created, create_person_id, created_at, is_handed_over, hand_over_person_id, handed_over_at, is_canceled, cancel_person_id, canceled_at)\nVALUES')
+print(f'INSERT INTO sales\n  (sale_id, item_id, register_person_id, registered_at, is_created, create_person_id, created_at, is_handed_over, hand_over_person_id, handed_over_at, is_canceled, cancel_person_id, canceled_at)\nVALUES')
 for i in range(len(sales)):
     print('  (', end="")
     now = ""
-    for j in range(len(sales[i])):
-        if j > 0:
+    for j in range(1, len(sales[i])):
+        if j > 1:
             now += ', '
         now += str(sales[i][j])
     print(now, end="")
