@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+  "fmt"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
@@ -26,7 +27,28 @@ type Sale struct {
 	CanceledAt       *time.Time `db:"canceled_at"`
 }
 
+type WaitingOrder struct {
+	SaleId           int       `json:"sale_id"`
+	time             time.Time `json:"time"`
+}
+
+type CallingOrder struct {
+	SaleId           int       `json:"sale_id"`
+	time             time.Time `json:"time"`
+}
+
 func main() {
+  _, dev := os.LookupEnv("DEV")
+  var mysql_host, server_port string
+  if dev {
+    // dev
+    server_port = ":1324"
+    mysql_host = "127.0.0.1"
+  } else {
+    // prod
+    server_port = ":1323"
+    mysql_host = "mysql_host"
+  }
 	// Echo instance
 	e := echo.New()
 
@@ -36,6 +58,11 @@ func main() {
 
 	// Routes
 	e.GET("/", hello)
+  e.GET("/waiting-orders", waiting_orders)
+  e.GET("/calling-orders", calling_orders)
+
+
+  // Database
 	jst, err := time.LoadLocation("Asia/Tokyo")
 	if err != nil {
 		log.Printf("jst get error %s", err)
@@ -47,7 +74,7 @@ func main() {
 		DBName:    "coffee_dog",
 		User:      "root",
 		Passwd:    mysql_root_password,
-		Addr:      "mysql_host:3306",
+		Addr:      fmt.Sprintf("%s:3306", mysql_host),
 		Net:       "tcp",
 		ParseTime: true,
     AllowNativePasswords: true,
@@ -78,12 +105,19 @@ func main() {
   for _, sale := range sales {
     log.Printf("%v", sale)
   }
-
-	// Start server
-	e.Logger.Fatal(e.Start(":1324"))
+  e.Logger.Fatal(e.Start(server_port))
 }
 
 // Handler
 func hello(c echo.Context) error {
 	return c.String(http.StatusOK, "Hello, World!")
+}
+
+// Handler
+func waiting_orders(c echo.Context) error {
+	return c.JSON(http.StatusOK, "Hello, World!")
+}
+
+func calling_orders(c echo.Context) error {
+	return c.JSON(http.StatusOK, "Hello, World!")
 }
