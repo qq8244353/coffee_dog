@@ -63,7 +63,7 @@ func main() {
 	// Routes
 	e.GET("/", hello)
   e.GET("/waiting-orders", waiting_orders_handler)
-  e.GET("/calling-orders", calling_orders)
+  e.GET("/calling-orders", calling_orders_handler)
 
 
   // Database
@@ -141,6 +141,21 @@ func waiting_orders_handler(c echo.Context) error {
 	return c.JSON(http.StatusOK, waiting_orders)
 }
 
-func calling_orders(c echo.Context) error {
-	return c.JSON(http.StatusOK, "Hello, World!")
+func calling_orders_handler(c echo.Context) error {
+	var sales []Sale
+  // registered は True である
+  err := db.Select(&sales, `SELECT * FROM sales WHERE is_created AND NOT is_handed_over AND NOT is_canceled;`)
+	if err != nil {
+		log.Printf("sql.Open error %s", err)
+	}
+  calling_orders := []CallingOrder{}
+  for _, sale := range sales {
+    calling_orders = append(calling_orders, CallingOrder{
+      SaleId: sale.SaleId,
+      Time: sale.RegisteredAt,
+    })
+  }
+  // debug
+  c.Response().Header().Set(echo.HeaderAccessControlAllowOrigin, "*")
+	return c.JSON(http.StatusOK, calling_orders)
 }
