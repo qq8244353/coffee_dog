@@ -10,7 +10,7 @@ function OrderView() {
   const [ callingOrders, setCallingOrders ] = useState(null)
   const [ callingOrdersPending, setCallingOrdersPending ] = useState(true)
   useEffect(() => {
-    fetch('http://127.0.0.1:1324/waiting-orders')
+    fetch('http://127.0.0.1:1323/waiting-orders')
     .then(res => {
       return res.json()
     })
@@ -18,7 +18,7 @@ function OrderView() {
       setWaitingOrders(data)
       setWaitingOrdersPending(false)
     })
-    fetch('http://127.0.0.1:1324/calling-orders')
+    fetch('http://127.0.0.1:1323/calling-orders')
     .then(res => {
       return res.json()
     })

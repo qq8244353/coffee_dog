@@ -8,7 +8,7 @@ function Admin() {
   const [ adminOrders, setAdminOrders ] = useState(null)
   const [ adminOrdersPending, setAdminOrdersPending ] = useState(true)
   useEffect(() => {
-    fetch('http://127.0.0.1:1324/admin-orders')
+    fetch('http://127.0.0.1:1323/admin-orders')
     .then(res => {
       return res.json()
     })
@@ -60,7 +60,31 @@ function Admin() {
                   return <p>受け渡し完了</p>
                 }
               })()}
-              <button>完成</button>
+              <button onClick={() => {
+                fetch('http://127.0.0.1:1324/admin-orders', {
+                  method: "PUT",
+                  headers: {
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({
+                    sale_id: order.sale_id,
+                    kind: 'created'
+                  })
+                })
+                .then(res => {
+                  if (res.ok) {
+                    return res.json()
+                  } else {
+                      console.log(res.text())
+                  }
+                })
+                .then(data => {
+                    console.log(data)
+                })
+                .catch(err => {
+                  console.log(err)
+                })
+              }}>完成</button>
               <button>受け渡し完了</button>
               <button>削除</button>
             </Flex>
