@@ -5,9 +5,10 @@ import (
 	"net/http"
 	"os"
   "fmt"
-"github.com/jmoiron/sqlx"
+  "github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+  "golang.org/x/exp/slices"
 
 	"github.com/go-sql-driver/mysql"
 	"time"
@@ -41,6 +42,13 @@ type CallingOrder struct {
 	Time             time.Time `json:"time"`
 }
 
+type AdminOrder struct {
+	SaleId           int        `json:"sale_id"`
+	ItemId           int        `json:"item_id"`
+  IsCreated        bool       `json:"is_created"`
+	IsHandedOver     bool       `json:"is_handed_over"`
+}
+
 func main() {
   _, dev := os.LookupEnv("DEV")
   var mysql_host, server_port string
@@ -64,6 +72,7 @@ func main() {
 	e.GET("/", hello)
   e.GET("/waiting-orders", waiting_orders_handler)
   e.GET("/calling-orders", calling_orders_handler)
+  e.GET("/admin-orders", get_admin_orders_handler)
 
 
   // Database
@@ -158,4 +167,31 @@ func calling_orders_handler(c echo.Context) error {
   // debug
   c.Response().Header().Set(echo.HeaderAccessControlAllowOrigin, "*")
 	return c.JSON(http.StatusOK, calling_orders)
+}
+
+func get_admin_orders_handler(c echo.Context) error {
+	var sales []Sale
+  // registered は True である
+  err := db.Select(&sales, `SELECT * FROM sales WHERE NOT is_canceled;`)
+	if err != nil {
+		log.Printf("sql.Open error %s", err)
+	}
+  admin_orders := []AdminOrder{}
+  saleIds := []int{}
+  for _, sale := range sales {
+    if slices.Contains(saleIds, sale.SaleId) {
+      log.Printf("duplicate %d", sale.SaleId)
+      continue
+    }
+    saleIds = append(saleIds, sale.SaleId)
+    admin_orders = append(admin_orders, AdminOrder{
+      SaleId: sale.SaleId,
+      ItemId: sale.ItemId,
+      IsCreated: sale.IsCreated,
+      IsHandedOver: sale.IsHandedOver,
+    })
+  }
+  // debug
+  c.Response().Header().Set(echo.HeaderAccessControlAllowOrigin, "*")
+	return c.JSON(http.StatusOK, admin_orders)
 }
