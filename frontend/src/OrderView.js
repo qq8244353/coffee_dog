@@ -42,6 +42,7 @@ function OrderView() {
           flex-basis: 0;
         `}
       >
+        <p>お呼び出し</p>
         <Flex
           containerCss={css`
             width: 40em;
@@ -64,6 +65,7 @@ function OrderView() {
             </div>
           ))}
         </Flex>
+        <p>作成中</p>
         <Flex
           containerCss={css`
             width: 40em;
