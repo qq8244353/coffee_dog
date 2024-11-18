@@ -4,7 +4,6 @@ import Flex from './Flex';
 import { useState, useEffect } from 'react';
 
 function OrderAlign({endpoint}) {
-
   const [ orders, setOrders ] = useState(null)
   const [ ordersPending, setOrdersPending ] = useState(true)
   useEffect(() => {

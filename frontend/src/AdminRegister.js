@@ -2,6 +2,7 @@
 import { css } from '@emotion/react'
 import Header from './Header'
 import Flex from './components/Flex';
+import Modal from './components/Modal';
 import AdminButton from './components/AdminButton';
 import AdminInput from './components/AdminInput';
 import { useState, useEffect } from 'react';
@@ -88,19 +89,7 @@ function AdminRegister() {
         }}>登録</button>
       </Flex>
       {modal && (
-        <div
-          css={css`
-          position:fixed;
-          top:0;
-          left:0;
-          width:100%;
-          height:100%;
-          background-color:rgba(0,0,0,0.5);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          `}
-        >
+        <Modal>
           <Flex
             containerCss={css`
               background-color: white;
@@ -127,7 +116,7 @@ function AdminRegister() {
               閉じる
             </button>
           </Flex>
-        </div>
+        </Modal>
       )}
     </>
   );
