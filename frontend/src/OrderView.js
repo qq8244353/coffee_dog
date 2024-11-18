@@ -2,6 +2,7 @@
 import { css } from '@emotion/react'
 import Header from './Header'
 import Flex from './components/Flex';
+import OrderAlign from './components/OrderAlign';
 import { useState, useEffect } from 'react';
 
 function OrderView() {
@@ -26,8 +27,6 @@ function OrderView() {
       setCallingOrders(data)
       setCallingOrdersPending(false)
     })
-      
-      
   }, [])
   useEffect(() => {
     console.log(waitingOrders)
@@ -43,51 +42,9 @@ function OrderView() {
         `}
       >
         <p>お呼び出し</p>
-        <Flex
-          containerCss={css`
-            width: 40em;
-            border: 1px solid;
-            flex-wrap: wrap;
-            justify-content: flex-start;
-          `}
-        >
-          { callingOrdersPending && <div> Loading... </div> }
-          { !callingOrdersPending && callingOrders.map(order => (
-            <div 
-              className="callingOrder"
-              key={order.sale_id}
-              css={css`
-                width: 5em;
-                height: 5em;
-              `}
-            >
-              <p>{order.sale_id}</p>
-            </div>
-          ))}
-        </Flex>
+        <OrderAlign endpoint={'calling-orders'} />
         <p>作成中</p>
-        <Flex
-          containerCss={css`
-            width: 40em;
-            border: 1px solid;
-            flex-wrap: wrap;
-            justify-content: flex-start;
-          `}
-        >
-          { waitingOrdersPending && <div> Loading... </div> }
-          { !waitingOrdersPending && waitingOrders.map(order => (
-            <div 
-              className="waitingOrder"
-              key={order.sale_id}
-              css={css`
-                width: 5em;
-                height: 5em;
-              `}
-            >
-              <p>{order.sale_id}</p>
-            </div>
-          ))}
-        </Flex>
+        <OrderAlign endpoint={'waiting-orders'} />
       </Flex>
     </>
   );
