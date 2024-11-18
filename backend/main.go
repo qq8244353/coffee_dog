@@ -274,14 +274,15 @@ func post_admin_orders_handler(c echo.Context) error {
 		return c.String(http.StatusBadRequest, "bad request")
 	}
   // get sale id
-  var saleIds []MaxSaleId
-	err = db.Select(&saleIds, `SELECT MAX(sale_id) FROM sales`)
+  var maxSaleId MaxSaleId
+	err = db.Get(&maxSaleId, `SELECT MAX(sale_id) FROM sales`)
 	if err != nil {
 		log.Printf("couldn't select max %s", err)
     return c.String(http.StatusInternalServerError, "internal server error")
 	}
+  log.Printf("%+v", maxSaleId)
   // common column
-  saleId := saleIds[0].Id + 1
+  saleId := maxSaleId.Id + 1
   timeNow := time.Now()
   var sales []Sale
   sql := `INSERT INTO sales (sale_id, item_id, register_person_id, registered_at) VALUES (:sale_id, :item_id, :register_person_id, :registered_at)`
