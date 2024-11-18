@@ -157,20 +157,13 @@ func hello(c echo.Context) error {
 
 // Handler
 func waiting_orders_handler(c echo.Context) error {
-	// var sales []Sale
-	// // registered は True である
-	// err := db.Select(&sales, `SELECT * FROM sales WHERE NOT is_created AND NOT is_canceled;`)
-	// if err != nil {
-	// 	log.Printf("sql.Open error %s", err)
-	// }
-	// waiting_orders := []ViewOrder{}
-	// for _, sale := range sales {
-	// 	waiting_orders = append(waiting_orders, ViewOrder{
-	// 		SaleId: sale.SaleId,
-	// 		Time:   sale.RegisteredAt,
-	// 	})
-	// }
-	return c.JSON(http.StatusOK, "success")
+	var sales []Sale
+	// registered は True である
+	err := db.Select(&sales, `SELECT * FROM sales WHERE NOT is_created AND NOT is_canceled;`)
+	if err != nil {
+		log.Printf("sql.Open error %s", err)
+	}
+  return c.JSON(http.StatusOK, buildViewOrder(sales))
 }
 
 func calling_orders_handler(c echo.Context) error {
@@ -180,11 +173,14 @@ func calling_orders_handler(c echo.Context) error {
 	if err != nil {
 		log.Printf("sql.Open error %s", err)
 	}
-  cntMap := make(map[int]map[int]int)
+  return c.JSON(http.StatusOK, buildViewOrder(sales))
+}
+
+// util
+func buildViewOrder(sales []Sale) []ViewOrder {
   timeMap := make(map[int]time.Time)
-  var viewOrder []ViewOrder
+  cntMap := make(map[int]map[int]int)
 	for _, sale := range sales {
-    log.Printf("%+v", sale)
     timeMap[sale.SaleId] = *sale.CreatedAt
     _, ok := cntMap[sale.SaleId]
     if !ok {
@@ -192,6 +188,7 @@ func calling_orders_handler(c echo.Context) error {
     }
     cntMap[sale.SaleId][sale.ItemId]++
 	}
+  var viewOrders []ViewOrder
   for saleId, m := range cntMap {
     var orderItems []OrderItem
     for itemId, cnt := range m {
@@ -200,14 +197,15 @@ func calling_orders_handler(c echo.Context) error {
         Cnt: cnt,
       })
     }
-    viewOrder = append(viewOrder, ViewOrder{
+    viewOrders = append(viewOrders, ViewOrder{
       SaleId: saleId,
       Items: orderItems,
       Time: timeMap[saleId],
     })
   }
-	return c.JSON(http.StatusOK, viewOrder)
+  return viewOrders
 }
+
 
 func get_admin_orders_handler(c echo.Context) error {
 	var sales []Sale
