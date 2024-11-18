@@ -36,16 +36,7 @@ type Sale struct {
 
 var db *sqlx.DB
 
-type WaitingOrder struct {
-	SaleId int       `json:"sale_id"`
-	Time   time.Time `json:"time"`
-}
-
-type CallingOrder struct {
-	SaleId int       `json:"sale_id"`
-	Time   time.Time `json:"time"`
-}
-
+// get
 type AdminOrder struct {
 	SaleId       int  `json:"sale_id"`
 	ItemId       int  `json:"item_id"`
@@ -53,11 +44,13 @@ type AdminOrder struct {
 	IsHandedOver bool `json:"is_handed_over"`
 }
 
+// put
 type AdminUpdate struct {
 	SaleId int    `json:"sale_id"`
 	Kind   string `json:"kind"`
 }
 
+// post
 type OrderItem struct {
 	ItemId       int  `json:"item_id"`
   Cnt          int  `json:"cnt"`
@@ -70,6 +63,12 @@ type AdminPost struct {
 
 type MaxSaleId struct {
   Id int `db:"MAX(sale_id)"`
+}
+
+type ViewOrder struct {
+  SaleId           int         `json:"sale_id"`
+	Items            []OrderItem `json:"items"`
+  Time             time.Time   `json:"time"`
 }
 
 func main() {
@@ -158,22 +157,20 @@ func hello(c echo.Context) error {
 
 // Handler
 func waiting_orders_handler(c echo.Context) error {
-	var sales []Sale
-	// registered は True である
-	err := db.Select(&sales, `SELECT * FROM sales WHERE NOT is_created AND NOT is_canceled;`)
-	if err != nil {
-		log.Printf("sql.Open error %s", err)
-	}
-	waiting_orders := []WaitingOrder{}
-	for _, sale := range sales {
-		waiting_orders = append(waiting_orders, WaitingOrder{
-			SaleId: sale.SaleId,
-			Time:   sale.RegisteredAt,
-		})
-	}
-	// debug
-	// c.Response().Header().Set(echo.HeaderAccessControlAllowOrigin, "*")
-	return c.JSON(http.StatusOK, waiting_orders)
+	// var sales []Sale
+	// // registered は True である
+	// err := db.Select(&sales, `SELECT * FROM sales WHERE NOT is_created AND NOT is_canceled;`)
+	// if err != nil {
+	// 	log.Printf("sql.Open error %s", err)
+	// }
+	// waiting_orders := []ViewOrder{}
+	// for _, sale := range sales {
+	// 	waiting_orders = append(waiting_orders, ViewOrder{
+	// 		SaleId: sale.SaleId,
+	// 		Time:   sale.RegisteredAt,
+	// 	})
+	// }
+	return c.JSON(http.StatusOK, "success")
 }
 
 func calling_orders_handler(c echo.Context) error {
@@ -183,14 +180,33 @@ func calling_orders_handler(c echo.Context) error {
 	if err != nil {
 		log.Printf("sql.Open error %s", err)
 	}
-	calling_orders := []CallingOrder{}
+  cntMap := make(map[int]map[int]int)
+  timeMap := make(map[int]time.Time)
+  var viewOrder []ViewOrder
 	for _, sale := range sales {
-		calling_orders = append(calling_orders, CallingOrder{
-			SaleId: sale.SaleId,
-			Time:   sale.RegisteredAt,
-		})
+    log.Printf("%+v", sale)
+    timeMap[sale.SaleId] = *sale.CreatedAt
+    _, ok := cntMap[sale.SaleId]
+    if !ok {
+      cntMap[sale.SaleId] = make(map[int]int)
+    }
+    cntMap[sale.SaleId][sale.ItemId]++
 	}
-	return c.JSON(http.StatusOK, calling_orders)
+  for saleId, m := range cntMap {
+    var orderItems []OrderItem
+    for itemId, cnt := range m {
+      orderItems = append(orderItems, OrderItem{
+        ItemId: itemId,
+        Cnt: cnt,
+      })
+    }
+    viewOrder = append(viewOrder, ViewOrder{
+      SaleId: saleId,
+      Items: orderItems,
+      Time: timeMap[saleId],
+    })
+  }
+	return c.JSON(http.StatusOK, viewOrder)
 }
 
 func get_admin_orders_handler(c echo.Context) error {
@@ -226,21 +242,23 @@ func put_admin_orders_handler(c echo.Context) error {
 	}
 	log.Printf("%d", admin_update.SaleId)
 	log.Printf("%s", admin_update.Kind)
+
+  timeNowStr := time.Now().Format("2006-01-02 15:04:05")
 	var res sql.Result
 	if admin_update.Kind == "created" {
-		res, err = db.Exec(`UPDATE sales SET is_created = TRUE WHERE sale_id = ?`, admin_update.SaleId)
+		res, err = db.Exec(`UPDATE sales SET is_created = TRUE, created_at = ? WHERE sale_id = ?`, timeNowStr, admin_update.SaleId)
 		if err != nil {
 			log.Printf("%s", err)
 			return c.String(http.StatusInternalServerError, "internal server error")
 		}
 	} else if admin_update.Kind == "handed over" {
-		res, err = db.Exec(`UPDATE sales SET is_handed_over = TRUE WHERE sale_id = ?`, admin_update.SaleId)
+		res, err = db.Exec(`UPDATE sales SET is_handed_over = TRUE, handed_over_at = ? WHERE sale_id = ?`, timeNowStr, admin_update.SaleId)
 		if err != nil {
 			log.Printf("%s", err)
 			return c.String(http.StatusInternalServerError, "internal server error")
 		}
 	} else if admin_update.Kind == "canceled" {
-		res, err = db.Exec(`UPDATE sales SET is_canceled = TRUE WHERE sale_id = ?`, admin_update.SaleId)
+		res, err = db.Exec(`UPDATE sales SET is_canceled = TRUE, canceled_at = ? WHERE sale_id = ?`, timeNowStr, admin_update.SaleId)
 		if err != nil {
 			log.Printf("%s", err)
 			return c.String(http.StatusInternalServerError, "internal server error")
@@ -279,7 +297,7 @@ func post_admin_orders_handler(c echo.Context) error {
       })
     }
   }
-  res, err := db.NamedExec(sql, sales)
+  _, err = db.NamedExec(sql, sales)
   if err != nil {
     log.Printf("%s", err)
     return c.String(http.StatusInternalServerError, "internal server error")
