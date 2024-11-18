@@ -62,30 +62,32 @@ function AdminRegister() {
           if (amandeChocolat > 0) {
             items.push({item_id: 31, cnt: amandeChocolat })
           }
-          fetch('http://127.0.0.1:1324/admin-orders', {
-            method: "POST",
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              items: items,
-              register_person_id: 0,
+          if (items.length > 0) {
+            fetch('http://127.0.0.1:1324/admin-orders', {
+              method: "POST",
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                items: items,
+                register_person_id: 0,
+              })
             })
-          })
-          .then(res => {
-            if (res.ok) {
-              return res.json()
-            } else {
-              console.log(res.text())
-            }
-          })
-          .then(saleId=> {
-            setModal(true)
-            setSaleId(saleId)
-          })
-          .catch(err => {
-            console.log(err)
-          })
+            .then(res => {
+              if (res.ok) {
+                return res.json()
+              } else {
+                console.log(res.text())
+              }
+            })
+            .then(saleId=> {
+              setModal(true)
+              setSaleId(saleId)
+            })
+            .catch(err => {
+              console.log(err)
+            })
+          }
         }}>登録</button>
       </Flex>
       {modal && (
@@ -102,6 +104,13 @@ function AdminRegister() {
             `}
           >
             <span>{saleId}</span>
+            {hotCoffee > 0 && <span>ホットコーヒー{hotCoffee}個</span>}
+            {iceCoffee > 0 && <span>アイスコーヒー{iceCoffee}個</span>}
+            {specialHotCoffee > 0 && <span>ホットコーヒー + オプション{specialHotCoffee}個</span>}
+            {specialIceCoffee > 0 && <span>アイスコーヒー + オプション{specialIceCoffee}個</span>}
+            {lemonade > 0 && <span>レモネード{lemonade}個</span>}
+            {mapleMadeleine > 0 && <span>メイプルマドレーヌ{mapleMadeleine}個</span>}
+            {amandeChocolat > 0 && <span>アマンドショコラ{amandeChocolat}個</span>}
             <button onClick={() => {
               setHotCoffee(0)
               setIceCoffee(0)
