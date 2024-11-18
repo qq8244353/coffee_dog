@@ -58,6 +58,20 @@ type AdminUpdate struct {
 	Kind   string `json:"kind"`
 }
 
+type OrderItem struct {
+	ItemId       int  `json:"item_id"`
+  Cnt          int  `json:"cnt"`
+}
+
+type AdminPost struct {
+	Items            []OrderItem `json:"items"`
+	RegisterPersonId int         `json:"register_person_id"`
+}
+
+type MaxSaleId struct {
+  Id int `db:"MAX(sale_id)"`
+}
+
 func main() {
 	_, dev := os.LookupEnv("DEV")
 	var mysql_host, server_port string
@@ -85,6 +99,7 @@ func main() {
 	// Admin
 	e.GET("/admin-orders", get_admin_orders_handler)
 	e.PUT("/admin-orders", put_admin_orders_handler)
+	e.POST("/admin-orders", post_admin_orders_handler)
 
 	// Database
 	jst, err := time.LoadLocation("Asia/Tokyo")
@@ -233,4 +248,41 @@ func put_admin_orders_handler(c echo.Context) error {
 	}
 	log.Printf("%v", res)
 	return c.String(http.StatusOK, "Success")
+}
+
+func post_admin_orders_handler(c echo.Context) error {
+  // bind payload
+	adminPost := new(AdminPost)
+	err := c.Bind(adminPost)
+	if err != nil {
+		return c.String(http.StatusBadRequest, "bad request")
+	}
+  // get sale id
+  var saleIds []MaxSaleId
+	err = db.Select(&saleIds, `SELECT MAX(sale_id) FROM sales`)
+	if err != nil {
+		log.Printf("couldn't select max %s", err)
+    return c.String(http.StatusInternalServerError, "internal server error")
+	}
+  // common column
+  saleId := saleIds[0].Id + 1
+  timeNow := time.Now()
+  var sales []Sale
+  sql := `INSERT INTO sales (sale_id, item_id, register_person_id, registered_at) VALUES (:sale_id, :item_id, :register_person_id, :registered_at)`
+  for _, item := range adminPost.Items {
+    for _ = range item.Cnt {
+      sales = append(sales, Sale{
+        SaleId: saleId,
+        ItemId: item.ItemId,
+        RegisterPersonId: adminPost.RegisterPersonId,
+        RegisteredAt: timeNow,
+      })
+    }
+  }
+  res, err := db.NamedExec(sql, sales)
+  if err != nil {
+    log.Printf("%s", err)
+    return c.String(http.StatusInternalServerError, "internal server error")
+  }
+	return c.String(http.StatusOK, fmt.Sprintf("%d", saleId))
 }
