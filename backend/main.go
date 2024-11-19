@@ -6,11 +6,11 @@ import (
 	"log"
 	"net/http"
 	"os"
+  "sort"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"golang.org/x/exp/slices"
 
 	"time"
 
@@ -35,13 +35,32 @@ type Sale struct {
 }
 
 var db *sqlx.DB
+var itemNameMap = map[int]string{
+  10: "ホットコーヒー", 
+  11: "アイスコーヒー", 
+  12: "ホットコーヒー + オプション", 
+  13: "アイスコーヒー + オプション", 
+  20: "レモネード",
+  30: "メープルマドレーヌ",
+  31: "アマンドショコラ",
+  41: "部紙",
+}
+var timeLayout = "2006-01-02 15:04:05"
+
+type OrderItem struct {
+	ItemId   int    `json:"item_id"`
+	ItemName string `json:"item_name"`
+	Cnt      int    `json:"cnt"`
+}
 
 // get
 type AdminOrder struct {
-	SaleId       int  `json:"sale_id"`
-  ItemId       int  `json:"item_id"`
-	IsCreated    bool `json:"is_created"`
-	IsHandedOver bool `json:"is_handed_over"`
+	SaleId       int         `json:"sale_id"`
+	Items        []OrderItem `json:"items"`
+	Time         time.Time   `json:"time"`
+	IsCreated    bool        `json:"is_created"`
+	IsHandedOver bool        `json:"is_handed_over"`
+  Index        int         `json:"index"`
 }
 
 // put
@@ -51,28 +70,23 @@ type AdminUpdate struct {
 }
 
 // post
-type OrderItem struct {
-	ItemId       int  `json:"item_id"`
-  Cnt          int  `json:"cnt"`
-}
-
 type AdminPost struct {
 	Items            []OrderItem `json:"items"`
 	RegisterPersonId int         `json:"register_person_id"`
 }
 
 type MaxSaleId struct {
-  Id int `db:"MAX(sale_id)"`
+	Id int `db:"MAX(sale_id)"`
 }
 
 type ViewOrder struct {
-  SaleId           int         `json:"sale_id"`
-	Items            []OrderItem `json:"items"`
-  Time             time.Time   `json:"time"`
+	SaleId int         `json:"sale_id"`
+	Items  []OrderItem `json:"items"`
+	Time   time.Time   `json:"time"`
 }
 
 func main() {
-	_, dev := os.LookupEnv("DEV")
+  _, dev := os.LookupEnv("DEV")
 	var mysql_host, server_port string
 	if dev {
 		// dev
@@ -159,11 +173,11 @@ func hello(c echo.Context) error {
 func waiting_orders_handler(c echo.Context) error {
 	var sales []Sale
 	// registered は True である
-	err := db.Select(&sales, `SELECT * FROM sales WHERE NOT is_created AND NOT is_canceled;`)
+	err := db.Select(&sales, `SELECT * FROM sales WHERE NOT is_created AND NOT is_canceled`)
 	if err != nil {
 		log.Printf("sql.Open error %s", err)
 	}
-  return c.JSON(http.StatusOK, buildViewOrder(sales, "waiting"))
+	return c.JSON(http.StatusOK, buildViewOrder(sales, "waiting"))
 }
 
 func calling_orders_handler(c echo.Context) error {
@@ -173,47 +187,47 @@ func calling_orders_handler(c echo.Context) error {
 	if err != nil {
 		log.Printf("sql.Open error %s", err)
 	}
-  return c.JSON(http.StatusOK, buildViewOrder(sales, "calling"))
+	return c.JSON(http.StatusOK, buildViewOrder(sales, "calling"))
 }
 
 // util
 func buildViewOrder(sales []Sale, method string) []ViewOrder {
-  timeMap := make(map[int]time.Time)
-  cntMap := make(map[int]map[int]int)
+	timeMap := make(map[int]time.Time)
+	cntMap := make(map[int]map[int]int)
 	for _, sale := range sales {
-    if method == "waiting" {
-      timeMap[sale.SaleId] = sale.RegisteredAt
-    } else if method == "calling" {
-      if sale.CreatedAt == nil {
-        log.Printf("nil createdAt: %+v", sale)
-        continue
-      }
-      timeMap[sale.SaleId] = *sale.CreatedAt
-    }
-    _, ok := cntMap[sale.SaleId]
-    if !ok {
-      cntMap[sale.SaleId] = make(map[int]int)
-    }
-    cntMap[sale.SaleId][sale.ItemId]++
+		if method == "waiting" {
+			timeMap[sale.SaleId] = sale.RegisteredAt
+		} else if method == "calling" {
+			if sale.CreatedAt == nil {
+				log.Printf("nil createdAt: %+v", sale)
+				continue
+			}
+			timeMap[sale.SaleId] = *sale.CreatedAt
+		}
+		_, ok := cntMap[sale.SaleId]
+		if !ok {
+			cntMap[sale.SaleId] = make(map[int]int)
+		}
+		cntMap[sale.SaleId][sale.ItemId]++
 	}
-  var viewOrders []ViewOrder
-  for saleId, m := range cntMap {
-    var orderItems []OrderItem
-    for itemId, cnt := range m {
-      orderItems = append(orderItems, OrderItem{
-        ItemId: itemId,
-        Cnt: cnt,
-      })
-    }
-    viewOrders = append(viewOrders, ViewOrder{
-      SaleId: saleId,
-      Items: orderItems,
-      Time: timeMap[saleId],
-    })
-  }
-  return viewOrders
+	var viewOrders []ViewOrder
+	for saleId, m := range cntMap {
+		var orderItems []OrderItem
+		for itemId, cnt := range m {
+			orderItems = append(orderItems, OrderItem{
+				ItemId: itemId,
+        ItemName: itemNameMap[itemId],
+				Cnt:    cnt,
+			})
+		}
+		viewOrders = append(viewOrders, ViewOrder{
+			SaleId: saleId,
+			Items:  orderItems,
+			Time:   timeMap[saleId],
+		})
+	}
+	return viewOrders
 }
-
 
 func get_admin_orders_handler(c echo.Context) error {
 	var sales []Sale
@@ -222,21 +236,56 @@ func get_admin_orders_handler(c echo.Context) error {
 	if err != nil {
 		log.Printf("sql.Open error %s", err)
 	}
-	admin_orders := []AdminOrder{}
-	saleIds := []int{}
+	adminOrders := []AdminOrder{}
+	saleMap := make(map[int]Sale)
+	cntMap := make(map[int]map[int]int)
 	for _, sale := range sales {
-		if slices.Contains(saleIds, sale.SaleId) {
-			log.Printf("duplicate %d", sale.SaleId)
-			continue
+		saleMap[sale.SaleId] = sale
+		_, ok := cntMap[sale.SaleId]
+		if !ok {
+			cntMap[sale.SaleId] = make(map[int]int)
 		}
-		saleIds = append(saleIds, sale.SaleId)
-		admin_orders = append(admin_orders, AdminOrder{
-			SaleId:       sale.SaleId,
-			IsCreated:    sale.IsCreated,
-			IsHandedOver: sale.IsHandedOver,
+		cntMap[sale.SaleId][sale.ItemId]++
+	}
+	for saleId, m := range cntMap {
+		var orderItems []OrderItem
+		for itemId, cnt := range m {
+			orderItems = append(orderItems, OrderItem{
+				ItemId: itemId,
+        ItemName: itemNameMap[itemId],
+				Cnt:    cnt,
+			})
+		}
+		adminOrders = append(adminOrders, AdminOrder{
+			SaleId:       saleId,
+			Items:        orderItems,
+			Time:         saleMap[saleId].RegisteredAt,
+			IsCreated:    saleMap[saleId].IsCreated,
+			IsHandedOver: saleMap[saleId].IsHandedOver,
 		})
 	}
-	return c.JSON(http.StatusOK, admin_orders)
+  sort.Slice(adminOrders, func(i, j int) bool {
+    rank := func(a AdminOrder) int {
+      if a.IsHandedOver {
+        return 100
+      } else if a.IsCreated {
+        return 10
+      } else {
+        return 0
+      }
+    }
+    irank := rank(adminOrders[i])
+    jrank := rank(adminOrders[j])
+    if irank == jrank {
+      return adminOrders[i].Time.After(adminOrders[j].Time)
+    }
+    return irank < jrank
+  })
+  for i, order := range adminOrders {
+    order.Index = i
+  }
+  log.Printf("%+v", adminOrders)
+	return c.JSON(http.StatusOK, adminOrders)
 }
 
 func put_admin_orders_handler(c echo.Context) error {
@@ -248,7 +297,7 @@ func put_admin_orders_handler(c echo.Context) error {
 	log.Printf("%d", admin_update.SaleId)
 	log.Printf("%s", admin_update.Kind)
 
-  timeNowStr := time.Now().Format("2006-01-02 15:04:05")
+	timeNowStr := time.Now().Format("2006-01-02 15:04:05")
 	var res sql.Result
 	if admin_update.Kind == "created" {
 		res, err = db.Exec(`UPDATE sales SET is_created = TRUE, created_at = ? WHERE sale_id = ?`, timeNowStr, admin_update.SaleId)
@@ -274,39 +323,39 @@ func put_admin_orders_handler(c echo.Context) error {
 }
 
 func post_admin_orders_handler(c echo.Context) error {
-  // bind payload
+	// bind payload
 	adminPost := new(AdminPost)
 	err := c.Bind(adminPost)
 	if err != nil {
 		return c.String(http.StatusBadRequest, "bad request")
 	}
-  // get sale id
-  var maxSaleId MaxSaleId
+	// get sale id
+	var maxSaleId MaxSaleId
 	err = db.Get(&maxSaleId, `SELECT MAX(sale_id) FROM sales`)
 	if err != nil {
 		log.Printf("couldn't select max %s", err)
-    return c.String(http.StatusInternalServerError, "internal server error")
+		return c.String(http.StatusInternalServerError, "internal server error")
 	}
-  log.Printf("%+v", maxSaleId)
-  // common column
-  saleId := maxSaleId.Id + 1
-  timeNow := time.Now()
-  var sales []Sale
-  sql := `INSERT INTO sales (sale_id, item_id, register_person_id, registered_at) VALUES (:sale_id, :item_id, :register_person_id, :registered_at)`
-  for _, item := range adminPost.Items {
-    for _ = range item.Cnt {
-      sales = append(sales, Sale{
-        SaleId: saleId,
-        ItemId: item.ItemId,
-        RegisterPersonId: adminPost.RegisterPersonId,
-        RegisteredAt: timeNow,
-      })
-    }
-  }
-  _, err = db.NamedExec(sql, sales)
-  if err != nil {
-    log.Printf("%s", err)
-    return c.String(http.StatusInternalServerError, "internal server error")
-  }
+	log.Printf("%+v", maxSaleId)
+	// common column
+	saleId := maxSaleId.Id + 1
+	timeNow := time.Now()
+	var sales []Sale
+	sql := `INSERT INTO sales (sale_id, item_id, register_person_id, registered_at) VALUES (:sale_id, :item_id, :register_person_id, :registered_at)`
+	for _, item := range adminPost.Items {
+		for _ = range item.Cnt {
+			sales = append(sales, Sale{
+				SaleId:           saleId,
+				ItemId:           item.ItemId,
+				RegisterPersonId: adminPost.RegisterPersonId,
+				RegisteredAt:     timeNow,
+			})
+		}
+	}
+	_, err = db.NamedExec(sql, sales)
+	if err != nil {
+		log.Printf("%s", err)
+		return c.String(http.StatusInternalServerError, "internal server error")
+	}
 	return c.String(http.StatusOK, fmt.Sprintf("%d", saleId))
 }
