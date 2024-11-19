@@ -10,7 +10,7 @@ function AdminOffer() {
   const [ adminOrders, setAdminOrders ] = useState(null)
   const [ adminOrdersPending, setAdminOrdersPending ] = useState(true)
   useEffect(() => {
-    fetch('http://127.0.0.1:1323/admin-orders')
+    fetch('http://127.0.0.1:1324/admin-orders')
     .then(res => {
       return res.json()
     })
@@ -36,13 +36,26 @@ function AdminOffer() {
       { !adminOrdersPending && adminOrders.map(order => (
         <Flex 
           className="adminOrder"
-          key={order.sale_id}
+          key={order.index}
           containerCss={css`
-            width: 20em;
+            width: 40em;
             height: 5em;
           `}
         >
-          <p>{order.sale_id}</p>
+          <span>{order.sale_id}</span>
+          <span>{(() => {
+            const date = new Date(Date.parse(order.time))
+            return `${date.getDate()}日 ${date.getHours()}時${date.getMinutes()}時`
+          })()}</span>
+          <ul>
+            {order.items.map(item => {
+              return (
+                <li>
+                  <span>{item.item_name}: {item.cnt}個</span>
+                </li>
+              )
+            })}
+          </ul>
           {(() => {
             if (!order.is_created) {
               return <p>作成待ち</p>
