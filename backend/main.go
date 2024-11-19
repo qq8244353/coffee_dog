@@ -39,7 +39,7 @@ var db *sqlx.DB
 // get
 type AdminOrder struct {
 	SaleId       int  `json:"sale_id"`
-	ItemId       int  `json:"item_id"`
+  ItemId       int  `json:"item_id"`
 	IsCreated    bool `json:"is_created"`
 	IsHandedOver bool `json:"is_handed_over"`
 }
@@ -163,7 +163,7 @@ func waiting_orders_handler(c echo.Context) error {
 	if err != nil {
 		log.Printf("sql.Open error %s", err)
 	}
-  return c.JSON(http.StatusOK, buildViewOrder(sales))
+  return c.JSON(http.StatusOK, buildViewOrder(sales, "waiting"))
 }
 
 func calling_orders_handler(c echo.Context) error {
@@ -173,15 +173,23 @@ func calling_orders_handler(c echo.Context) error {
 	if err != nil {
 		log.Printf("sql.Open error %s", err)
 	}
-  return c.JSON(http.StatusOK, buildViewOrder(sales))
+  return c.JSON(http.StatusOK, buildViewOrder(sales, "calling"))
 }
 
 // util
-func buildViewOrder(sales []Sale) []ViewOrder {
+func buildViewOrder(sales []Sale, method string) []ViewOrder {
   timeMap := make(map[int]time.Time)
   cntMap := make(map[int]map[int]int)
 	for _, sale := range sales {
-    timeMap[sale.SaleId] = *sale.CreatedAt
+    if method == "waiting" {
+      timeMap[sale.SaleId] = sale.RegisteredAt
+    } else if method == "calling" {
+      if sale.CreatedAt == nil {
+        log.Printf("nil createdAt: %+v", sale)
+        continue
+      }
+      timeMap[sale.SaleId] = *sale.CreatedAt
+    }
     _, ok := cntMap[sale.SaleId]
     if !ok {
       cntMap[sale.SaleId] = make(map[int]int)
@@ -224,7 +232,6 @@ func get_admin_orders_handler(c echo.Context) error {
 		saleIds = append(saleIds, sale.SaleId)
 		admin_orders = append(admin_orders, AdminOrder{
 			SaleId:       sale.SaleId,
-			ItemId:       sale.ItemId,
 			IsCreated:    sale.IsCreated,
 			IsHandedOver: sale.IsHandedOver,
 		})
