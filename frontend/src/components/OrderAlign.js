@@ -15,6 +15,9 @@ function OrderAlign({endpoint}) {
       setOrders(data)
       setOrdersPending(false)
     })
+    .catch(err => {
+      console.log(err)
+    })
   }, [])
   return (
     <Flex
