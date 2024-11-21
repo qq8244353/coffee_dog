@@ -25,5 +25,6 @@ create table IF not exists `recieve_nums`
 (
  `id` INT(3) AUTO_INCREMENT,
  `available` BOOLEAN DEFAULT FALSE,
+ `updated_at` Datetime DEFAULT NULL,
  PRIMARY KEY (`id`)
 );
