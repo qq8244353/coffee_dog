@@ -41,3 +41,28 @@ VALUES
   (31, 31, 0, "2024-11-24 16:13:23", TRUE, 3, "2024-11-24 16:17:15", FALSE, NULL, NULL, FALSE, NULL, NULL  ),
   (32, 31, 1, "2024-11-24 16:25:06", TRUE, 4, "2024-11-24 16:28:58", TRUE, 19, "2024-11-24 16:31:39", FALSE, NULL, NULL  ),
   (33, 10, 11, "2024-11-24 16:27:58", FALSE, NULL, NULL, FALSE, NULL, NULL, FALSE, NULL, NULL  );
+
+INSERT INTO recieve_nums
+  (available)
+VALUES
+  (FALSE),
+  (FALSE),
+  (FALSE),
+  (FALSE),
+  (FALSE),
+  (FALSE),
+  (FALSE),
+  (FALSE),
+  (FALSE),
+  (FALSE),
+  (FALSE),
+  (FALSE),
+  (FALSE),
+  (FALSE),
+  (FALSE),
+  (FALSE),
+  (FALSE),
+  (FALSE),
+  (FALSE),
+  (FALSE),
+  (FALSE);

@@ -20,3 +20,10 @@ create table IF not exists `sales`
  `canceled_at`          Datetime DEFAULT NULL,
  PRIMARY KEY (`id`)
 );
+
+create table IF not exists `recieve_nums`
+(
+ `id` INT(3) AUTO_INCREMENT,
+ `available` BOOLEAN DEFAULT FALSE,
+ PRIMARY KEY (`id`)
+);
