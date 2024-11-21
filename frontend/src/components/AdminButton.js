@@ -1,36 +1,47 @@
 /** @jsxImportSource @emotion/react */
 import { css } from '@emotion/react'
+import IconButton from '@mui/material/IconButton';
+import Button from '@mui/material/Button';
 
 function AdminButton(props) {
-  const { name, endpoint, saleId } = props
+  const { children, endpoint, saleId, color, disabled } = props
   return (
-    <button onClick={() => {
-      fetch('http://127.0.0.1:1324/admin-orders', {
-        method: "PUT",
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          sale_id: saleId,
-          kind: endpoint
+    <Button 
+      sx={{
+        width: 70,
+        height:70,
+      }}
+      color={color}
+      disabled={disabled}
+      variant="contained"
+      onClick={() => {
+        fetch('http://127.0.0.1:1324/admin-orders', {
+          method: "PUT",
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            sale_id: saleId,
+            kind: endpoint
+          })
         })
-      })
-      .then(res => {
-        if (res.ok) {
-          return res.json()
-        } else {
-            console.log(res.text())
-        }
-      })
-      .then(data => {
-          console.log(data)
-      })
-      .catch(err => {
-        console.log(err)
-      })
-    }}>
-      {name}
-    </button>
+        .then(res => {
+          if (res.ok) {
+            return res.json()
+          } else {
+              console.log(res.text())
+          }
+        })
+        .then(data => {
+            console.log(data)
+        })
+        .catch(err => {
+          console.log(err)
+        })
+      }}
+    >
+      {children}
+    </Button>
   )
 }
 export default AdminButton
