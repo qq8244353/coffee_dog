@@ -34,6 +34,12 @@ type Sale struct {
 	CanceledAt       *time.Time `db:"canceled_at"`
 }
 
+type RecieveNumber struct {
+  Id               int        `db:"id", json:"id"`
+  Available        bool       `db:"available", json:"available"`
+  UpdatedAt        *time.Time `db:"updated_at", json:"updated_at"`
+}
+
 var db *sqlx.DB
 var itemNameMap = map[int]string{
   10: "ホットコーヒー", 
@@ -109,6 +115,7 @@ func main() {
 	e.GET("/", hello)
 	e.GET("/waiting-orders", waiting_orders_handler)
 	e.GET("/calling-orders", calling_orders_handler)
+	e.GET("/recieve-numbers", recieve_numbers)
 	// Admin
 	e.GET("/admin-orders", get_admin_orders_handler)
 	e.PUT("/admin-orders", put_admin_orders_handler)
@@ -167,6 +174,17 @@ func main() {
 // Handler
 func hello(c echo.Context) error {
 	return c.String(http.StatusOK, "Hello, World!")
+}
+
+func recieve_numbers(c echo.Context) error {
+	var recieveNumbers[]RecieveNumber
+	// registered は True である
+	err := db.Select(&recieveNumbers, `SELECT * FROM recieve_nums`)
+	if err != nil {
+		log.Printf("sql.Open error %s", err)
+	}
+  log.Printf("%+v", recieveNumbers)
+	return c.JSON(http.StatusOK, recieveNumbers)
 }
 
 // Handler
