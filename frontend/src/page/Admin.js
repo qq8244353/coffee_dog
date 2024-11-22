@@ -33,7 +33,6 @@ function Admin() {
 
   const loadData = () => {
     setAdminOrdersPending(true)
-    // fetch(`http://localhost:1324/admin-orders`)
     fetch(`${GetBaseURL()}/admin-orders`)
     .then(res => {
       return res.json()

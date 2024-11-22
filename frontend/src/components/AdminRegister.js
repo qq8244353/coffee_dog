@@ -75,7 +75,7 @@ function AdminRegister({ loadData }) {
                 items.push({item_id: 31, cnt: amandeChocolat })
               }
               if (items.length > 0) {
-                fetch(`http://localhost:1324/admin-orders`, {
+                fetch(`${GetBaseURL()}/admin-orders`, {
                   method: "POST",
                   headers: {
                     'Content-Type': 'application/json'
