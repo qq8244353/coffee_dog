@@ -33,10 +33,10 @@ function App() {
           <OrderView />
         </TabPanel>
         <TabPanel value="2">
-          <SalesChart />
+          <SalesChart day={1}/>
         </TabPanel>
         <TabPanel value="3">
-          Item Three
+          <SalesChart day={2}/>
         </TabPanel>
       </TabContext>
     </>
