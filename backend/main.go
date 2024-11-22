@@ -34,10 +34,11 @@ type Sale struct {
 	CanceledAt       *time.Time `db:"canceled_at"`
 }
 
-type RecieveNumber struct {
+type RecieveId struct {
   Id               int        `db:"id", json:"id"`
   Available        bool       `db:"available", json:"available"`
   UpdatedAt        *time.Time `db:"updated_at", json:"updated_at"`
+  SaleId           int        `db:"sale_id", json:"sale_id"`
 }
 
 var db *sqlx.DB
@@ -86,10 +87,16 @@ type MaxSaleId struct {
 }
 
 type ViewOrder struct {
-	SaleId int         `json:"sale_id"`
-	Items  []OrderItem `json:"items"`
-	Time   time.Time   `json:"time"`
+	SaleId     int         `json:"sale_id"`
+	Items      []OrderItem `json:"items"`
+	Time       time.Time   `json:"time"`
+  RecieveId  int         `json:"recieve_id"`
 }
+
+type MessageJson struct {
+	Message    string   `json:"message"`
+}
+
 
 func main() {
   _, dev := os.LookupEnv("DEV")
@@ -115,7 +122,7 @@ func main() {
 	e.GET("/", hello)
 	e.GET("/waiting-orders", waiting_orders_handler)
 	e.GET("/calling-orders", calling_orders_handler)
-	e.GET("/recieve-numbers", recieve_numbers)
+	// e.GET("/recieve-numbers", recieve_numbers)
 	// Admin
 	e.GET("/admin-orders", get_admin_orders_handler)
 	e.PUT("/admin-orders", put_admin_orders_handler)
@@ -176,16 +183,16 @@ func hello(c echo.Context) error {
 	return c.String(http.StatusOK, "Hello, World!")
 }
 
-func recieve_numbers(c echo.Context) error {
-	var recieveNumbers[]RecieveNumber
-	// registered は True である
-	err := db.Select(&recieveNumbers, `SELECT * FROM recieve_nums`)
-	if err != nil {
-		log.Printf("sql.Open error %s", err)
-	}
-  log.Printf("%+v", recieveNumbers)
-	return c.JSON(http.StatusOK, recieveNumbers)
-}
+// func recieve_numbers(c echo.Context) error {
+// 	var recieveId[]RecieveNumber
+// 	// registered は True である
+// 	err := db.Select(&recieveNumbers, `SELECT * FROM recieve_nums`)
+// 	if err != nil {
+// 		log.Printf("sql.Open error %s", err)
+// 	}
+//   log.Printf("%+v", recieveNumbers)
+// 	return c.JSON(http.StatusOK, recieveNumbers)
+// }
 
 // Handler
 func waiting_orders_handler(c echo.Context) error {
@@ -210,6 +217,17 @@ func calling_orders_handler(c echo.Context) error {
 
 // util
 func buildViewOrder(sales []Sale, method string) []ViewOrder {
+  // recieve numbers
+	var recieveIds[]RecieveId
+	// registered は True である
+	err := db.Select(&recieveIds, `SELECT * FROM recieve_nums WHERE NOT available`)
+	if err != nil {
+		log.Printf("sql.Open error %s", err)
+	}
+	recieveIdsMap := make(map[int]int)
+  for _, rId := range recieveIds {
+    recieveIdsMap[rId.SaleId] = rId.Id
+  }
 	timeMap := make(map[int]time.Time)
 	cntMap := make(map[int]map[int]int)
 	for _, sale := range sales {
@@ -239,9 +257,10 @@ func buildViewOrder(sales []Sale, method string) []ViewOrder {
 			})
 		}
 		viewOrders = append(viewOrders, ViewOrder{
-			SaleId: saleId,
-			Items:  orderItems,
-			Time:   timeMap[saleId],
+			SaleId:        saleId,
+			Items:         orderItems,
+			Time:          timeMap[saleId],
+      RecieveId: recieveIdsMap[saleId],
 		})
 	}
 	return viewOrders
@@ -333,11 +352,11 @@ func put_admin_orders_handler(c echo.Context) error {
 		res, err = db.Exec(`UPDATE sales SET is_canceled = TRUE, canceled_at = ? WHERE sale_id = ?`, timeNowStr, admin_update.SaleId)
 		if err != nil {
 			log.Printf("%s", err)
-			return c.String(http.StatusInternalServerError, "internal server error")
+			return c.JSON(http.StatusInternalServerError, "internal server error")
 		}
 	}
 	log.Printf("%v", res)
-	return c.String(http.StatusOK, "Success")
+  return c.JSON(http.StatusOK, MessageJson{ Message: "Success" })
 }
 
 func post_admin_orders_handler(c echo.Context) error {
@@ -375,5 +394,5 @@ func post_admin_orders_handler(c echo.Context) error {
 		log.Printf("%s", err)
 		return c.String(http.StatusInternalServerError, "internal server error")
 	}
-	return c.String(http.StatusOK, fmt.Sprintf("%d", saleId))
+  return c.JSON(http.StatusOK, MessageJson{ Message: fmt.Sprintf("%d", saleId) })
 }
