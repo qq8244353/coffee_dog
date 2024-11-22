@@ -4,6 +4,7 @@ import Header from '../Header'
 import Flex from './Flex';
 import AdminButton from './AdminButton';
 import AdminInput from './AdminInput';
+import AdminOrderCard from './AdminOrderCard';
 import { useState, useEffect } from 'react';
 
 import Stack from '@mui/material/Stack';
@@ -34,97 +35,27 @@ function AdminOffer({ adminOrders, adminOrdersPending, loadData }) {
         useFlexGap
         sx={{ flexWrap: 'wrap' }}
       >
-        { adminOrdersPending && <div> Loading... </div> }
-        { !adminOrdersPending && adminOrders.map(order => {
-          return (
-            <Stack
-              key={order.sale_id}
-              spacing={{ xs: 1, sm: 2 }}
-              direction="row"
-              useFlexGap
-              sx={{ flexWrap: 'wrap' }}
-            >
-              <Box
-                sx={{
-                  bgcolor: 'background.paper',
-                  boxShadow: 1,
-                  borderRadius: 2,
-                  p: 4,
-                  minWidth: 300,
-                  display: 'flex',
-                  gap: 1,
-                }}
-              >
-                <Box
-                  sx={{
-                    display: 'flex',
-                    width: 320
-                  }}
-                >
-                  <Box>
-                    <Box sx={{ color: 'text.priamary', fontSize: 34 }}>{order.sale_id}</Box>
-                    <Box sx={{ color: 'text.secondary' }}>
-                      {(() => {
-                        const date = new Date(Date.parse(order.time))
-                        return `${date.getDate()}日 ${date.getHours()}時${date.getMinutes()}分`
-                      })()}
-                    </Box>
-                    <Box sx={{ color: 'text.secondary', display: 'inline', fontSize: 14 }}>
-                      {(() => {
-                        if (!order.is_created) {
-                          return '作成待ち'
-                        } else if (!order.is_handed_over) {
-                          return '受け取り待ち'
-                        } else {
-                          return '受け渡し完了'
-                        }
-                      })()}
-                    </Box>
-                  </Box>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'flex-end',
-                      mx: 2,
-                    }}
-                  >
-                    {order.items.map(item => {
-                      return (
-                        <Box 
-                          key={`${order.sale_id}${item.item_name}`}
-                          sx={{ typography: 'body1' }}
-                        >
-                          {item.item_name}: {item.cnt}個
-                        </Box>
-                      )
-                    })}
-                  </Box>
-                </Box>
-                <Box
-                 sx={{
-                  mt: 2,
-                  display: 'flex',
-                  gap: 2,
-                 }}
-                >
-                  <AdminButton endpoint="created" saleId={order.sale_id} color='success' loadData={loadData} disabled={order.is_created}>
-                    <CheckCircleIcon />
-                  </AdminButton>
-                  <AdminButton endpoint="handed over" saleId={order.sale_id} color='info' loadData={loadData} disabled={!order.is_created || order.is_handed_over}>
-                    <ChangeCircleIcon />
-                  </AdminButton>
-                  <AdminButton endpoint="canceled" saleId={order.sale_id} color='error' onClick = {() => {
-                    setCancelingSaleId(order.sale_id)
-                    setModal(true)
-                  }}>
-                    <DeleteIcon />
-                  </AdminButton>
-                </Box>
-              </Box>
-            </Stack>
-          )
-        })}
+        {(()  => {
+          if (adminOrdersPending) {
+            return (
+              <Typography sx={{ fontSize: 30 }}> Loading... </Typography>
+            )
+          } else if (adminOrders.length === 0) {
+            return (
+              <Typography sx={{ fontSize: 30 }}> 注文がありません </Typography>
+            )
+          } else {
+            return (
+              <>
+              {adminOrders.map(order => {
+                return (
+                  <AdminOrderCard order={order} loadData={loadData} setCancelingSaleId={setCancelingSaleId} setModal={setModal} />
+                )
+              })}
+              </>
+            )
+          }
+        })()}
       </Stack>
       <Modal
         open={modal}
