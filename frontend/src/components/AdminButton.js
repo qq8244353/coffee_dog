@@ -4,17 +4,7 @@ import IconButton from '@mui/material/IconButton';
 import Button from '@mui/material/Button';
 
 function AdminButton(props) {
-  const { children, endpoint, saleId, color, disabled } = props
-  return (
-    <Button 
-      sx={{
-        width: 70,
-        height:70,
-      }}
-      color={color}
-      disabled={disabled}
-      variant="contained"
-      onClick={() => {
+  const { children, endpoint, saleId, color, disabled, loadData, onClick = () => {
         fetch('http://127.0.0.1:1323/admin-orders', {
           method: "PUT",
           headers: {
@@ -29,16 +19,29 @@ function AdminButton(props) {
           if (res.ok) {
             return res.json()
           } else {
-              console.log(res.text())
+            console.log(res.text())
           }
         })
         .then(data => {
-            console.log(data)
+          console.log(data)
+          loadData()
         })
         .catch(err => {
           console.log(err)
         })
+      }
+  } = props
+
+  return (
+    <Button 
+      sx={{
+        width: 70,
+        height:70,
       }}
+      color={color}
+      disabled={disabled}
+      variant="contained"
+      onClick={onClick}
     >
       {children}
     </Button>

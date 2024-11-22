@@ -1,10 +1,11 @@
 /** @jsxImportSource @emotion/react */
 import { css } from '@emotion/react'
-import Header from './Header'
-import Flex from './components/Flex';
-import AdminButton from './components/AdminButton';
-import AdminInput from './components/AdminInput';
+import Header from '../Header'
+import Flex from './Flex';
+import AdminButton from './AdminButton';
+import AdminInput from './AdminInput';
 import { useState, useEffect } from 'react';
+
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import List from '@mui/material/List'
@@ -12,7 +13,7 @@ import Modal from '@mui/material/Modal'
 import Paper from '@mui/material/Paper'
 import Typography from '@mui/material/Typography'
 
-function AdminRegister({setModal}) {
+function AdminRegister({ loadData }) {
   const [hotCoffee, setHotCoffee] = useState(0)
   const [iceCoffee, setIceCoffee] = useState(0)
   const [specialHotCoffee, setSpecialHotCoffee] = useState(0)
@@ -20,7 +21,7 @@ function AdminRegister({setModal}) {
   const [lemonade, setLemonade] = useState(0)
   const [mapleMadeleine, setMapleMadeleine] = useState(0)
   const [amandeChocolat, setAmandeChocolat] = useState(0)
-  // const [modal, setModal] = useState(false)
+  const [modal, setModal] = useState(false)
   const [saleId, setSaleId] = useState(null)
   return (
     <>
@@ -89,9 +90,10 @@ function AdminRegister({setModal}) {
                     console.log(res.text())
                   }
                 })
-                .then(saleId=> {
+                .then(saleId => {
                   setModal(true)
-                  setSaleId(saleId)
+                  setSaleId(saleId.message)
+                  loadData()
                 })
                 .catch(err => {
                   console.log(err)
@@ -103,44 +105,75 @@ function AdminRegister({setModal}) {
           </Button>
         </Box>
       </List>
+      <Modal
+        open={modal}
+        onClose={() => {setModal(false)}}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
+      >
+        <Box
+          sx={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: 400,
+            bgcolor: 'background.paper',
+            border: '2px solid #000',
+            boxShadow: 24,
+            borderRadius: 4,
+            p: 4,
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
+          <Box>
+            <Typography
+              sx={{
+                display: 'inline',
+                fontSize: 20
+              }}
+            >
+              受け取り番号:
+            </Typography>
+            <Typography
+              sx={{
+                display: 'inline',
+                fontSize: 40
+              }}
+            >
+              {saleId}
+            </Typography>
+          </Box>
+          {hotCoffee > 0 && <Typography>ホットコーヒー{hotCoffee}個</Typography>}
+          {iceCoffee > 0 && <Typography>アイスコーヒー{iceCoffee}個</Typography>}
+          {specialHotCoffee > 0 && <Typography>ホットコーヒー + オプション{specialHotCoffee}個</Typography>}
+          {specialIceCoffee > 0 && <Typography>アイスコーヒー + オプション{specialIceCoffee}個</Typography>}
+          {lemonade > 0 && <Typography>レモネード{lemonade}個</Typography>}
+          {mapleMadeleine > 0 && <Typography>メイプルマドレーヌ{mapleMadeleine}個</Typography>}
+          {amandeChocolat > 0 && <Typography>アマンドショコラ{amandeChocolat}個</Typography>}
+          <Button 
+            sx={{
+            }}
+            variant="contained"
+            onClick={() => {
+              setHotCoffee(0)
+              setIceCoffee(0)
+              setSpecialHotCoffee(0)
+              setSpecialIceCoffee(0)
+              setLemonade(0)
+              setMapleMadeleine(0)
+              setAmandeChocolat(0)
+              setModal(false)
+              setSaleId(null)
+            }}
+          >
+            閉じる
+          </Button>
+        </Box>
+      </Modal>
     </>
   );
 }
 
 export default AdminRegister
-      // {modal && (
-      //   <Modal>
-      //     <Flex
-      //       containerCss={css`
-      //         background-color: white;
-      //         width: 20em;
-      //         height: 20em;
-      //         border-radius: 5em;
-      //         align-items: center;
-      //         justify-content: center;
-      //         flex-direction: column;
-      //       `}
-      //     >
-      //       <span>{saleId}</span>
-      //       {hotCoffee > 0 && <span>ホットコーヒー{hotCoffee}個</span>}
-      //       {iceCoffee > 0 && <span>アイスコーヒー{iceCoffee}個</span>}
-      //       {specialHotCoffee > 0 && <span>ホットコーヒー + オプション{specialHotCoffee}個</span>}
-      //       {specialIceCoffee > 0 && <span>アイスコーヒー + オプション{specialIceCoffee}個</span>}
-      //       {lemonade > 0 && <span>レモネード{lemonade}個</span>}
-      //       {mapleMadeleine > 0 && <span>メイプルマドレーヌ{mapleMadeleine}個</span>}
-      //       {amandeChocolat > 0 && <span>アマンドショコラ{amandeChocolat}個</span>}
-      //       <button onClick={() => {
-      //         setHotCoffee(0)
-      //         setIceCoffee(0)
-      //         setSpecialHotCoffee(0)
-      //         setSpecialIceCoffee(0)
-      //         setLemonade(0)
-      //         setMapleMadeleine(0)
-      //         setAmandeChocolat(0)
-      //         setModal(false)
-      //         setSaleId(null)
-      //       }}>
-      //         閉じる
-      //       </button>
-      //     </Flex>
-      //   </Modal>
