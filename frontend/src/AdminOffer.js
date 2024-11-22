@@ -16,7 +16,7 @@ function AdminOffer() {
   const [ adminOrders, setAdminOrders ] = useState(null)
   const [ adminOrdersPending, setAdminOrdersPending ] = useState(true)
   useEffect(() => {
-    fetch('http://127.0.0.1:1324/admin-orders')
+    fetch('http://127.0.0.1:1323/admin-orders')
     .then(res => {
       return res.json()
     })
@@ -36,14 +36,6 @@ function AdminOffer() {
     >
       { adminOrdersPending && <div> Loading... </div> }
       { !adminOrdersPending && adminOrders.map(order => {
-        let color = 'red'
-        if (!order.is_created) {
-          color = '#B7FFFF'
-        } else if (!order.is_handed_over) {
-          color = '#B7FFDB'
-        } else {
-          color = '#DBFFB7'
-        }
         return (
           <Stack
             key={order.index}

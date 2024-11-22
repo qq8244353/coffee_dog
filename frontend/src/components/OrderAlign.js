@@ -2,8 +2,12 @@
 import { css } from '@emotion/react'
 import Flex from './Flex';
 import { useState, useEffect } from 'react';
+import Box from '@mui/material/Box';
+import Stack from '@mui/material/Stack';
+import Grid from '@mui/material/Grid2';
+import Typography from '@mui/material/Typography';
 
-function OrderAlign({endpoint}) {
+function OrderAlign({name, endpoint}) {
   const [ orders, setOrders ] = useState(null)
   const [ ordersPending, setOrdersPending ] = useState(true)
   useEffect(() => {
@@ -20,27 +24,64 @@ function OrderAlign({endpoint}) {
     })
   }, [])
   return (
-    <Flex
-      containerCss={css`
-        width: 40em;
-        border: 1px solid;
-        flex-wrap: wrap;
-        justify-content: flex-start;
-      `}
+    <Box
+      cx={{
+        display: 'flex',
+        flexDirection: 'column',
+      }}
     >
-      { ordersPending && <div> Loading... </div> }
-      { !ordersPending && orders.map(order => (
-        <div 
-          key={order.sale_id}
-          css={css`
-            width: 5em;
-            height: 5em;
-          `}
-        >
-          <p>{order.sale_id}</p>
-        </div>
-      ))}
-    </Flex>
+      <Typography variant="subtitle" component="h2">{name}</Typography>
+      <Box
+        sx={{
+          bgcolor: 'background.paper',
+          boxShadow: 1,
+          borderRadius: 2,
+          display: 'flex',
+          gap: 1,
+          justifyContent: "flex-start",
+          flexWrap: "wrap",
+        }}
+      >
+        { ordersPending && <div> Loading... </div> }
+        { !ordersPending && orders.map(order => (
+          <Box
+            key={order.sale_id}
+            cx={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              bgcolor: 'background.paper',
+              p: 4,
+            }}
+          >
+            <Box
+              sx={{
+                color: 'text.secondary',
+                display: 'flex',
+                flexDirection: 'column',
+                width: 200,
+                height: 100,
+                boxShadow: 4,
+                p: 4,
+                borderRadius: 2,
+              }}
+            >
+              <Box sx={{ color: 'text.priamary', fontSize: 34 }}>{order.sale_id}</Box>
+              {order.items.map(item => {
+                return (
+                  <Box
+                    key={item.item_name}
+                    sx={{ color: 'text.secondary' }}
+                  >
+                    {item.item_name}: {item.cnt}個
+                  </Box>
+                )
+              })}
+            </Box>
+          </Box>
+        ))}
+      </Box>
+    </Box>
   );
 }
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import OrderView from './OrderView';
+import App from './page/App';
 import Admin from './page/Admin';
 import reportWebVitals from './reportWebVitals';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom'
@@ -10,7 +10,7 @@ root.render(
   <React.StrictMode>
     <Router>
       <Routes>
-        <Route path="/" element={<OrderView />}/>
+        <Route path="/" element={<App />}/>
         <Route path="/admin" element={<Admin />}/>
       </Routes>
     </Router>
