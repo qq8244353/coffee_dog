@@ -18,8 +18,10 @@ function OrderAlign({name, endpoint}) {
       return res.json()
     })
     .then(data => {
-      setOrders(data)
-      setOrdersPending(false)
+      if (data.length !== 0) {
+        setOrders(data)
+        setOrdersPending(false)
+      }
     })
     .catch(err => {
       console.log(err)
