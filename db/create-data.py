@@ -35,13 +35,13 @@ def get_random_date():
 sales = []
 item_ids = [ 10, 11, 12, 13, 20, 30, 31, 41 ]
 
-l = 120
+l = 5
 sale_id = 0
 # waiting
 for i in range(l):
     registered_at, created_at, handed_over_at, canceled_at = get_random_date()
     d = [ i for i in range(14) ]
-    d[2] = item_ids[rd.randint(0, len(item_ids))]
+    d[2] = item_ids[rd.randint(0, len(item_ids) - 1)]
     d[3] = rd.randint(0, 23)
     d[4] = registered_at
     d[5] =  'FALSE'
@@ -58,7 +58,7 @@ for i in range(l):
 for i in range(l):
     registered_at, created_at, handed_over_at, canceled_at = get_random_date()
     d = [ i for i in range(14) ]
-    d[2] = item_ids[rd.randint(0, len(item_ids))]
+    d[2] = item_ids[rd.randint(0, len(item_ids) - 1)]
     d[3] = rd.randint(0, 23)
     d[4] = registered_at
     d[5] =  'TRUE'
@@ -75,7 +75,7 @@ for i in range(l):
 for i in range(l):
     registered_at, created_at, handed_over_at, canceled_at = get_random_date()
     d = [ i for i in range(14) ]
-    d[2] = item_ids[rd.randint(0, len(item_ids))]
+    d[2] = item_ids[rd.randint(0, len(item_ids) - 1)]
     d[3] = rd.randint(0, 23)
     d[4] = registered_at
     d[5] = 'TRUE'
@@ -92,7 +92,7 @@ for i in range(l):
 for i in range(l):
     registered_at, created_at, handed_over_at, canceled_at = get_random_date()
     d = [ i for i in range(14) ]
-    d[2] = item_ids[rd.randint(0, len(item_ids))]
+    d[2] = item_ids[rd.randint(0, len(item_ids) - 1)]
     d[3] = rd.randint(0, 23)
     d[4] = registered_at
     d[5] =  'FALSE'

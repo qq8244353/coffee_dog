@@ -21,9 +21,10 @@ create table IF not exists `sales`
  PRIMARY KEY (`id`)
 );
 
-create table IF not exists `recieve_nums`
+create table IF not exists `recieve_ids`
 (
- `id` INT(3) AUTO_INCREMENT,
+ `id` INT(2) AUTO_INCREMENT,
+ `sale_id` INT(3) DEFAULT NULL,
  `available` BOOLEAN DEFAULT FALSE,
  `updated_at` Datetime DEFAULT NULL,
  PRIMARY KEY (`id`)
