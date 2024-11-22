@@ -1,5 +1,6 @@
 import Header from '../Header'
 import OrderView from '../components/OrderView';
+import SalesChart from '../components/SalesChart';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid2';
 
@@ -32,7 +33,7 @@ function App() {
           <OrderView />
         </TabPanel>
         <TabPanel value="2">
-          Item Two
+          <SalesChart />
         </TabPanel>
         <TabPanel value="3">
           Item Three
