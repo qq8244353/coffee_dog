@@ -86,6 +86,10 @@ type MaxSaleId struct {
 	Id int `db:"MAX(sale_id)"`
 }
 
+type CntSaleId struct {
+	Id int `db:"COUNT(sale_id)"`
+}
+
 type ViewOrder struct {
 	SaleId     int         `json:"sale_id"`
 	Items      []OrderItem `json:"items"`
@@ -249,7 +253,7 @@ func buildViewOrder(sales []Sale, method string) []ViewOrder {
 		}
 		cntMap[sale.SaleId][sale.ItemId]++
 	}
-	var viewOrders []ViewOrder
+  var viewOrders = []ViewOrder{}
 	for saleId, m := range cntMap {
 		var orderItems []OrderItem
 		for itemId, cnt := range m {
@@ -370,15 +374,20 @@ func post_admin_orders_handler(c echo.Context) error {
 		return c.String(http.StatusBadRequest, "bad request")
 	}
 	// get sale id
-	var maxSaleId MaxSaleId
-	err = db.Get(&maxSaleId, `SELECT MAX(sale_id) FROM sales`)
+  var maxSaleIds = MaxSaleId{}
+  err = db.Get(&maxSaleIds, `SELECT MAX(sale_id) FROM sales`)
 	if err != nil {
 		log.Printf("couldn't select max %s", err)
-		return c.String(http.StatusInternalServerError, "internal server error")
+    var cntSaleIds = CntSaleId{}
+    err = db.Get(&cntSaleIds, `SELECT COUNT(sale_id) FROM sales`)
+    if err != nil {
+      return c.String(http.StatusInternalServerError, "internal server error")
+    }
+    log.Printf("cnt %+v", cntSaleIds.Id)
 	}
-	log.Printf("%+v", maxSaleId)
+  saleId := maxSaleIds.Id + 1
+	log.Printf("%+v", saleId)
 	// common column
-	saleId := maxSaleId.Id + 1
 	timeNow := time.Now()
 	var sales []Sale
 	sql := `INSERT INTO sales (sale_id, item_id, register_person_id, registered_at) VALUES (:sale_id, :item_id, :register_person_id, :registered_at)`
