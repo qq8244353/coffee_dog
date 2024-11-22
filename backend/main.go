@@ -1,5 +1,4 @@
 package main
-
 import (
 	"database/sql"
 	"fmt"
@@ -52,7 +51,7 @@ var itemNameMap = map[int]string{
   31: "アマンドショコラ",
   41: "部紙",
 }
-var timeLayout = "2006-01-02 15:04:05"
+var timeLayout = "2006-01-02 15:04:05 (MST)"
 
 type OrderItem struct {
 	ItemId   int    `json:"item_id"`
@@ -101,8 +100,19 @@ type MessageJson struct {
 	Message    string   `json:"message"`
 }
 
+type GraphData struct {
+  HotCoffee  int    `json:"hot_coffee"`
+  IceCoffee  int    `json:"ice_coffee"`
+  Lemonade   int    `json:"lemonade"`
+  Madeleine  int    `json:"madeleine"`
+  Chocolat   int    `json:"chocolat"`
+  Journal    int    `json:"journal"`
+  Option     int    `json:"option"`
+  Time       string `json:"time"`
+}
 
 func main() {
+  os.Setenv("TZ", "Asia/Tokyo")
   _, dev := os.LookupEnv("DEV")
 	var mysql_host, server_port string
 	if dev {
@@ -129,6 +139,8 @@ func main() {
 	e.GET("/", hello)
 	e.GET("/waiting-orders", waiting_orders_handler)
 	e.GET("/calling-orders", calling_orders_handler)
+	e.GET("/graph-data-day1", get_graph_data_day1)
+	e.GET("/graph-data-day2", get_graph_data_day2)
 	// e.GET("/recieve-numbers", recieve_numbers)
 	// Admin
 	e.GET("/admin-orders", get_admin_orders_handler)
@@ -407,4 +419,75 @@ func post_admin_orders_handler(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, "internal server error")
 	}
   return c.JSON(http.StatusOK, MessageJson{ Message: fmt.Sprintf("%d", saleId) })
+}
+
+func get_graph_data_day1(c echo.Context) error {
+  res, err := get_graph_data(c, 3)
+  if err != nil {
+    return err
+  }
+  return c.JSON(http.StatusOK, res)
+}
+
+func get_graph_data_day2(c echo.Context) error {
+  res, err := get_graph_data(c, 4)
+  if err != nil {
+    return err
+  }
+  return c.JSON(http.StatusOK, res)
+}
+
+func get_graph_data(c echo.Context, day int) ([]GraphData, error) {
+	var sales []Sale
+	// registered は True である
+	err := db.Select(&sales, `SELECT * FROM sales WHERE NOT is_canceled`)
+	if err != nil {
+		log.Printf("sql.Open error %s", err)
+	}
+  sort.Slice(sales, func(i, j int) bool {
+    return sales[i].RegisteredAt.Before(sales[j].RegisteredAt)
+  })
+  var graphDataList = []GraphData{}
+  timeNow, err := time.Parse(timeLayout, fmt.Sprintf("2024-11-2%d 10:00:00 (JST)", day))
+  if err != nil {
+    log.Printf("time parse error: %s", err)
+  }
+  timeEnd, err := time.Parse(timeLayout, fmt.Sprintf("2024-11-2%d 17:00:00 (JST)", day))
+  if err != nil {
+    log.Printf("time parse error: %s", err)
+  }
+  ind := 0
+  for ind < len(sales) && sales[ind].RegisteredAt.Before(timeNow) {
+    ind++
+  }
+  timeNow = timeNow.Add(time.Minute * 30)
+  for timeNow.Before(timeEnd) {
+    g := GraphData{}
+    for ind < len(sales) && sales[ind].RegisteredAt.Before(timeNow) {
+      if sales[ind].ItemId == 10 {
+        g.HotCoffee++
+      } else if sales[ind].ItemId == 11 {
+        g.IceCoffee++
+      } else if sales[ind].ItemId == 12 {
+        g.HotCoffee++
+        g.Option++
+      } else if sales[ind].ItemId == 13 {
+        g.IceCoffee++
+        g.Option++
+      } else if sales[ind].ItemId == 20 {
+        g.Lemonade++
+      } else if sales[ind].ItemId == 30 {
+        g.Madeleine++
+      } else if sales[ind].ItemId == 31 {
+        g.Chocolat++
+      } else if sales[ind].ItemId == 41 {
+        g.Journal++
+      }
+      ind++
+    }
+    g.Time += fmt.Sprintf("-%02d:%02d", timeNow.Hour(), timeNow.Minute())
+    timeNow = timeNow.Add(time.Minute * 30)
+    graphDataList = append(graphDataList, g)
+  }
+  return graphDataList, nil
 }
