@@ -15,7 +15,7 @@ function AdminButton(props) {
       disabled={disabled}
       variant="contained"
       onClick={() => {
-        fetch('http://127.0.0.1:1324/admin-orders', {
+        fetch('http://127.0.0.1:1323/admin-orders', {
           method: "PUT",
           headers: {
             'Content-Type': 'application/json'

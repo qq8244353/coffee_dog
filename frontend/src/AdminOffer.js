@@ -38,7 +38,7 @@ function AdminOffer() {
       { !adminOrdersPending && adminOrders.map(order => {
         return (
           <Stack
-            key={order.index}
+            key={order.sale_id}
             spacing={{ xs: 1, sm: 2 }}
             direction="row"
             useFlexGap
@@ -91,7 +91,12 @@ function AdminOffer() {
                 >
                   {order.items.map(item => {
                     return (
-                      <Box sx={{ typography: 'body1' }}>{item.item_name}: {item.cnt}個</Box>
+                      <Box 
+                        key={`${order.sale_id}${item.item_name}`}
+                        sx={{ typography: 'body1' }}
+                      >
+                        {item.item_name}: {item.cnt}個
+                      </Box>
                     )
                   })}
                 </Box>

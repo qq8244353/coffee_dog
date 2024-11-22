@@ -103,7 +103,6 @@ function AdminRegister({setModal}) {
           </Button>
         </Box>
       </List>
-      )}
     </>
   );
 }
