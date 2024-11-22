@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './page/App';
 import Admin from './page/Admin';
+import AdminAllOrders from './page/AdminAllOrders';
 import reportWebVitals from './reportWebVitals';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom'
 
@@ -12,6 +13,7 @@ root.render(
       <Routes>
         <Route path="/" element={<App />}/>
         <Route path="/admin" element={<Admin />}/>
+        <Route path="/admin-all-orders" element={<AdminAllOrders />}/>
       </Routes>
     </Router>
   </React.StrictMode>

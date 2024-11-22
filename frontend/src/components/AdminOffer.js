@@ -49,7 +49,7 @@ function AdminOffer({ adminOrders, adminOrdersPending, loadData }) {
               <>
               {adminOrders.map(order => {
                 return (
-                  <AdminOrderCard order={order} loadData={loadData} setCancelingSaleId={setCancelingSaleId} setModal={setModal} />
+                  <AdminOrderCard key={order.index} order={order} loadData={loadData} setCancelingSaleId={setCancelingSaleId} setModal={setModal} />
                 )
               })}
               </>

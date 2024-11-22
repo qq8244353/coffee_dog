@@ -17,10 +17,9 @@ import DeleteIcon from '@mui/icons-material/Delete';
 
 import GetBaseURL from '../utils/GetBaseURL';
 
-export default function AdminOrderCard({order, loadData, setCancelingSaleId, setModal}) {
+export default function AdminOrderCard({order, loadData, setCancelingSaleId, setModal, uniqueKeySuffix}) {
   return (
     <Stack
-      key={order.sale_id}
       spacing={{ xs: 1, sm: 2 }}
       direction="row"
       useFlexGap
@@ -32,18 +31,23 @@ export default function AdminOrderCard({order, loadData, setCancelingSaleId, set
           boxShadow: 1,
           borderRadius: 2,
           p: 4,
-          minWidth: 300,
+          minWidth: 700,
           display: 'flex',
           gap: 1,
         }}
       >
         <Box
           sx={{
+            justifyContent: 'space-between',
             display: 'flex',
-            width: 320
+            width: 320,
           }}
         >
-          <Box>
+          <Box
+            sx={{
+              minWidth: 100
+            }}
+          >
             <Box sx={{ color: 'text.priamary', fontSize: 34 }}>{order.sale_id}</Box>
             <Box sx={{ color: 'text.secondary' }}>
               {(() => {
@@ -68,13 +72,14 @@ export default function AdminOrderCard({order, loadData, setCancelingSaleId, set
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'flex-end',
-              mx: 2,
+              minWidth: 300,
+              mx: 4,
             }}
           >
             {order.items.map(item => {
               return (
                 <Box 
-                  key={`${order.sale_id}${item.item_name}`}
+                  key={`${item.item_name}-${item.cnt}`}
                   sx={{ typography: 'body1' }}
                 >
                   {item.item_name}: {item.cnt}個
@@ -82,26 +87,26 @@ export default function AdminOrderCard({order, loadData, setCancelingSaleId, set
               )
             })}
           </Box>
-        </Box>
-        <Box
-         sx={{
-          mt: 2,
-          display: 'flex',
-          gap: 2,
-         }}
-        >
-          <AdminButton endpoint="created" saleId={order.sale_id} color='success' loadData={loadData} disabled={order.is_created}>
-            <CheckCircleIcon />
-          </AdminButton>
-          <AdminButton endpoint="handed over" saleId={order.sale_id} color='info' loadData={loadData} disabled={!order.is_created || order.is_handed_over}>
-            <ChangeCircleIcon />
-          </AdminButton>
-          <AdminButton endpoint="canceled" saleId={order.sale_id} color='error' onClick = {() => {
-            setCancelingSaleId(order.sale_id)
-            setModal(true)
-          }}>
-            <DeleteIcon />
-          </AdminButton>
+          <Box
+           sx={{
+            mt: 2,
+            display: 'flex',
+            gap: 2,
+           }}
+          >
+            <AdminButton endpoint="created" saleId={order.sale_id} color='success' loadData={loadData} disabled={order.is_created}>
+              <CheckCircleIcon />
+            </AdminButton>
+            <AdminButton endpoint="handed over" saleId={order.sale_id} color='info' loadData={loadData} disabled={!order.is_created || order.is_handed_over}>
+              <ChangeCircleIcon />
+            </AdminButton>
+            <AdminButton endpoint="canceled" saleId={order.sale_id} color='error' onClick = {() => {
+              setCancelingSaleId(order.sale_id)
+              setModal(true)
+            }}>
+              <DeleteIcon />
+            </AdminButton>
+          </Box>
         </Box>
       </Box>
     </Stack>

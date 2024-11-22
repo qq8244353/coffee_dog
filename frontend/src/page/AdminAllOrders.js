@@ -26,7 +26,7 @@ const style = {
 };
 
 
-export default function Admin() {
+export default function AdminAllOrders() {
   const [modal, setModal] = useState(false)
   const [ adminOrders, setAdminOrders ] = useState(null)
   const [ adminOrdersPending, setAdminOrdersPending ] = useState(true)
@@ -48,13 +48,8 @@ export default function Admin() {
   return (
     <>
       <Header />
-      <Grid container spacing={2}>
-        <Grid size={6}>
-          <AdminRegister loadData={loadData} setModal={setModal} />
-        </Grid>
-        <Grid size={6}>
-          <AdminOffer adminOrders={adminOrders} adminOrdersPending={adminOrdersPending} loadData={loadData} uniqueKeySuffix={'admin'}/>
-        </Grid>
+      <Grid size={12}>
+        <AdminOffer adminOrders={adminOrders} adminOrdersPending={adminOrdersPending} loadData={loadData} uniqueKeySuffix={'admin-all-orders'}/>
       </Grid>
     </>
   );
