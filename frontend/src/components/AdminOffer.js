@@ -15,6 +15,8 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ChangeCircleIcon from '@mui/icons-material/ChangeCircle';
 import DeleteIcon from '@mui/icons-material/Delete';
 
+import GetBaseURL from '../utils/GetBaseURL';
+
 function AdminOffer({ adminOrders, adminOrdersPending, loadData }) {
   const [ modal, setModal ] = useState(false)
   const [ cancelingSaleId, setCancelingSaleId ] = useState(null)
@@ -163,7 +165,7 @@ function AdminOffer({ adminOrders, adminOrdersPending, loadData }) {
               variant="contained"
               onClick = {() => {
                 console.log(cancelingSaleId)
-                fetch('http://127.0.0.1:1323/admin-orders', {
+                fetch(`${GetBaseURL()}/admin-orders`, {
                   method: "PUT",
                   headers: {
                     'Content-Type': 'application/json'

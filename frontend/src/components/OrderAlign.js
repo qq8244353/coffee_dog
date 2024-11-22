@@ -7,11 +7,13 @@ import Stack from '@mui/material/Stack';
 import Grid from '@mui/material/Grid2';
 import Typography from '@mui/material/Typography';
 
+import GetBaseURL from '../utils/GetBaseURL';
+
 function OrderAlign({name, endpoint}) {
   const [ orders, setOrders ] = useState(null)
   const [ ordersPending, setOrdersPending ] = useState(true)
   useEffect(() => {
-    fetch(`http://127.0.0.1:1323/${endpoint}`)
+    fetch(`${GetBaseURL()}/${endpoint}`)
     .then(res => {
       return res.json()
     })

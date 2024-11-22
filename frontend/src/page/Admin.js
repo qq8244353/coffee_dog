@@ -11,6 +11,8 @@ import Modal from '@mui/material/Modal';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 
+import GetBaseURL from '../utils/GetBaseURL';
+
 const style = {
   position: 'absolute',
   top: '50%',
@@ -30,19 +32,15 @@ function Admin() {
   const [ adminOrdersPending, setAdminOrdersPending ] = useState(true)
 
   const loadData = () => {
-    console.log("loaded")
     setAdminOrdersPending(true)
-    fetch('http://127.0.0.1:1323/admin-orders')
-    .then(res => {
-      return res.json()
-    })
-    .then(data => {
-      setAdminOrders(data)
-      setAdminOrdersPending(false)
-    })
-    .catch(err => {
-      console.log(err)
-    })
+    fetch(`${GetBaseURL()}/admin-orders`)
+      .then(res => {
+        return res.json()
+      })
+      .then(data => {
+        setAdminOrders(data)
+        setAdminOrdersPending(false)
+      })
   }
 
   return (

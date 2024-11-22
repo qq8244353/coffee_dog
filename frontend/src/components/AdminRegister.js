@@ -13,6 +13,8 @@ import Modal from '@mui/material/Modal'
 import Paper from '@mui/material/Paper'
 import Typography from '@mui/material/Typography'
 
+import GetBaseURL from '../utils/GetBaseURL';
+
 function AdminRegister({ loadData }) {
   const [hotCoffee, setHotCoffee] = useState(0)
   const [iceCoffee, setIceCoffee] = useState(0)
@@ -73,7 +75,7 @@ function AdminRegister({ loadData }) {
                 items.push({item_id: 31, cnt: amandeChocolat })
               }
               if (items.length > 0) {
-                fetch('http://127.0.0.1:1323/admin-orders', {
+                fetch(`${GetBaseURL()}/admin-orders`, {
                   method: "POST",
                   headers: {
                     'Content-Type': 'application/json'
