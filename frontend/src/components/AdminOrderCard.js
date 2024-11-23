@@ -48,7 +48,14 @@ export default function AdminOrderCard({order, loadData, setCancelingSaleId, set
               minWidth: 100
             }}
           >
-            <Box sx={{ color: 'text.priamary', fontSize: 34 }}>{order.sale_id}</Box>
+            <Box
+              sx={{
+                display: 'flex',
+              }}
+            >
+              <Box sx={{ color: 'text.priamary', fontSize: 34 }}>{order.recieve_id}</Box>
+              <Box sx={{ color: 'text.priamary', fontSize: 20, mx: 2, mt: 1 }}>   ({order.sale_id})</Box>
+            </Box>
             <Box sx={{ color: 'text.secondary' }}>
               {(() => {
                 const date = new Date(Date.parse(order.time))

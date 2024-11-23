@@ -39,6 +39,9 @@ export default function Admin() {
     })
     .then(data => {
       if (data) {
+        data.sort((a,b) => {
+          return a.index < b.index;
+        });
         setAdminOrders(data)
         setAdminOrdersPending(false)
       }

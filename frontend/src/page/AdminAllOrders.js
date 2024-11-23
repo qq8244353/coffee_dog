@@ -33,7 +33,7 @@ export default function AdminAllOrders() {
 
   const loadData = () => {
     setAdminOrdersPending(true)
-    fetch(`${GetBaseURL()}/admin-orders`)
+    fetch(`${GetBaseURL()}/admin-all-orders`)
     .then(res => {
       return res.json()
     })

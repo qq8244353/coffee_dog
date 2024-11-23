@@ -31,14 +31,16 @@ type Sale struct {
 	IsCanceled       bool       `db:"is_canceled"`
 	CancelPersonId   *int       `db:"cancel_person_id"`
 	CanceledAt       *time.Time `db:"canceled_at"`
+  // JOIN
+	RecieveId        int        `db:"recieve_id"`
 }
 
-type RecieveId struct {
-  Id               int        `db:"id", json:"id"`
-  Available        bool       `db:"available", json:"available"`
-  UpdatedAt        *time.Time `db:"updated_at", json:"updated_at"`
-  SaleId           int        `db:"sale_id", json:"sale_id"`
-}
+// type RecieveId struct {
+//   Id               int        `db:"id", json:"id"`
+//   Available        bool       `db:"available", json:"available"`
+//   UpdatedAt        *time.Time `db:"updated_at", json:"updated_at"`
+//   SaleId           int        `db:"sale_id", json:"sale_id"`
+// }
 
 var db *sqlx.DB
 var itemNameMap = map[int]string{
@@ -67,6 +69,7 @@ type AdminOrder struct {
 	IsCreated    bool        `json:"is_created"`
 	IsHandedOver bool        `json:"is_handed_over"`
   Index        int         `json:"index"`
+  RecieveId    int         `json:"recieve_id"`
 }
 
 // put
@@ -88,6 +91,11 @@ type MaxSaleId struct {
 type CntSaleId struct {
 	Id int `db:"COUNT(sale_id)"`
 }
+
+type RecieveId struct {
+	Id int `db:"id"`
+}
+
 
 type ViewOrder struct {
 	SaleId     int         `json:"sale_id"`
@@ -143,6 +151,7 @@ func main() {
 	e.GET("/graph-data-day2", get_graph_data_day2)
 	// e.GET("/recieve-numbers", recieve_numbers)
 	// Admin
+	e.GET("/admin-all-orders", get_admin_all_orders_handler)
 	e.GET("/admin-orders", get_admin_orders_handler)
 	e.PUT("/admin-orders", put_admin_orders_handler)
 	e.POST("/admin-orders", post_admin_orders_handler)
@@ -154,7 +163,7 @@ func main() {
 	}
 
 	mysql_root_password := os.Getenv("MYSQL_ROOT_PASSWORD")
-	log.Printf("mysql root password: %s", mysql_root_password)
+	// log.Printf("mysql root password: %s", mysql_root_password)
 	cfg := mysql.Config{
 		DBName:               "coffee_dog",
 		User:                 "root",
@@ -181,19 +190,6 @@ func main() {
 		log.Print(err)
 		time.Sleep(time.Second * 2)
 	}
-
-	var sales []Sale
-	err = db.Select(&sales, `SELECT * FROM sales;`)
-	if err != nil {
-		log.Printf("sql.Open error %s", err)
-	}
-	sales_ids := []int{}
-	for _, sale := range sales {
-		sales_ids = append(sales_ids, sale.SaleId)
-		log.Printf("%v", sale)
-	}
-
-	log.Printf("%v", sales_ids)
 	e.Logger.Fatal(e.Start(server_port))
 }
 
@@ -202,22 +198,11 @@ func hello(c echo.Context) error {
 	return c.String(http.StatusOK, "Hello, World!")
 }
 
-// func recieve_numbers(c echo.Context) error {
-// 	var recieveId[]RecieveNumber
-// 	// registered は True である
-// 	err := db.Select(&recieveNumbers, `SELECT * FROM recieve_nums`)
-// 	if err != nil {
-// 		log.Printf("sql.Open error %s", err)
-// 	}
-//   log.Printf("%+v", recieveNumbers)
-// 	return c.JSON(http.StatusOK, recieveNumbers)
-// }
-
 // Handler
 func waiting_orders_handler(c echo.Context) error {
 	var sales []Sale
 	// registered は True である
-	err := db.Select(&sales, `SELECT * FROM sales WHERE NOT is_created AND NOT is_canceled`)
+	err := db.Select(&sales, `SELECT S.sale_id, S.registered_at, S.created_at, S.item_id, R.id AS recieve_id FROM sales AS S INNER JOIN recieve_ids AS R ON S.sale_id - R.sale_id WHERE NOT is_created AND NOT is_canceled`)
 	if err != nil {
 		log.Printf("sql.Open error %s", err)
 	}
@@ -227,7 +212,7 @@ func waiting_orders_handler(c echo.Context) error {
 func calling_orders_handler(c echo.Context) error {
 	var sales []Sale
 	// registered は True である
-	err := db.Select(&sales, `SELECT * FROM sales WHERE is_created AND NOT is_handed_over AND NOT is_canceled;`)
+	err := db.Select(&sales, `SELECT S.sale_id, S.registered_at, S.created_at, S.item_id, R.id AS recieve_id FROM sales AS S INNER JOIN recieve_ids AS R ON S.sale_id - R.sale_id WHERE  is_created AND NOT is_handed_over AND NOT is_canceled;`)
 	if err != nil {
 		log.Printf("sql.Open error %s", err)
 	}
@@ -237,17 +222,8 @@ func calling_orders_handler(c echo.Context) error {
 // util
 func buildViewOrder(sales []Sale, method string) []ViewOrder {
   // recieve numbers
-	var recieveIds[]RecieveId
-	// registered は True である
-	err := db.Select(&recieveIds, `SELECT * FROM recieve_nums WHERE NOT available`)
-	if err != nil {
-		log.Printf("sql.Open error %s", err)
-	}
-	recieveIdsMap := make(map[int]int)
-  for _, rId := range recieveIds {
-    recieveIdsMap[rId.SaleId] = rId.Id
-  }
 	timeMap := make(map[int]time.Time)
+  recieveIdMap := make(map[int]int)
 	cntMap := make(map[int]map[int]int)
 	for _, sale := range sales {
 		if method == "waiting" {
@@ -264,6 +240,7 @@ func buildViewOrder(sales []Sale, method string) []ViewOrder {
 			cntMap[sale.SaleId] = make(map[int]int)
 		}
 		cntMap[sale.SaleId][sale.ItemId]++
+    recieveIdMap[sale.SaleId] = sale.RecieveId
 	}
   var viewOrders = []ViewOrder{}
 	for saleId, m := range cntMap {
@@ -279,13 +256,13 @@ func buildViewOrder(sales []Sale, method string) []ViewOrder {
 			SaleId:        saleId,
 			Items:         orderItems,
 			Time:          timeMap[saleId],
-      RecieveId: recieveIdsMap[saleId],
+      RecieveId:     recieveIdMap[saleId],
 		})
 	}
 	return viewOrders
 }
 
-func get_admin_orders_handler(c echo.Context) error {
+func get_admin_all_orders_handler(c echo.Context) error {
 	var sales []Sale
 	// registered は True である
 	err := db.Select(&sales, `SELECT * FROM sales WHERE NOT is_canceled;`)
@@ -337,8 +314,67 @@ func get_admin_orders_handler(c echo.Context) error {
     }
     return irank < jrank
   })
-  for i, order := range adminOrders {
-    order.Index = i
+  for i, _ := range adminOrders {
+    adminOrders[i].Index = i
+  }
+	return c.JSON(http.StatusOK, adminOrders)
+}
+
+func get_admin_orders_handler(c echo.Context) error {
+	var sales []Sale
+	// registered は True である
+	err := db.Select(&sales, `SELECT S.sale_id, S.item_id, S.registered_at, S.is_created, S.is_handed_over, R.id AS recieve_id FROM sales AS S INNER JOIN recieve_ids AS R ON S.sale_id = R.sale_id;`)
+	if err != nil {
+		log.Printf("sql.Open error %s", err)
+	}
+	adminOrders := []AdminOrder{}
+	saleMap := make(map[int]Sale)
+	cntMap := make(map[int]map[int]int)
+	for _, sale := range sales {
+		saleMap[sale.SaleId] = sale
+		_, ok := cntMap[sale.SaleId]
+		if !ok {
+			cntMap[sale.SaleId] = make(map[int]int)
+		}
+		cntMap[sale.SaleId][sale.ItemId]++
+	}
+	for saleId, m := range cntMap {
+		var orderItems []OrderItem
+		for itemId, cnt := range m {
+			orderItems = append(orderItems, OrderItem{
+				ItemId: itemId,
+        ItemName: itemNameMap[itemId],
+				Cnt:    cnt,
+			})
+		}
+		adminOrders = append(adminOrders, AdminOrder{
+			SaleId:       saleId,
+			Items:        orderItems,
+			Time:         saleMap[saleId].RegisteredAt,
+			IsCreated:    saleMap[saleId].IsCreated,
+			IsHandedOver: saleMap[saleId].IsHandedOver,
+			RecieveId:    saleMap[saleId].RecieveId,
+		})
+	}
+  sort.Slice(adminOrders, func(i, j int) bool {
+    rank := func(a AdminOrder) int {
+      if a.IsHandedOver {
+        return 100
+      } else if a.IsCreated {
+        return 10
+      } else {
+        return 0
+      }
+    }
+    irank := rank(adminOrders[i])
+    jrank := rank(adminOrders[j])
+    if irank == jrank {
+      return adminOrders[i].Time.After(adminOrders[j].Time)
+    }
+    return irank < jrank
+  })
+  for i, _ := range adminOrders {
+    adminOrders[i].Index = i
   }
   log.Printf("%+v", adminOrders)
 	return c.JSON(http.StatusOK, adminOrders)
@@ -350,9 +386,6 @@ func put_admin_orders_handler(c echo.Context) error {
 	if err != nil {
 		return c.String(http.StatusBadRequest, "bad request")
 	}
-	log.Printf("%d", admin_update.SaleId)
-	log.Printf("%s", admin_update.Kind)
-
 	timeNowStr := time.Now().Format("2006-01-02 15:04:05")
 	var res sql.Result
 	if admin_update.Kind == "created" {
@@ -362,19 +395,33 @@ func put_admin_orders_handler(c echo.Context) error {
 			return c.String(http.StatusInternalServerError, "internal server error")
 		}
 	} else if admin_update.Kind == "handed over" {
+    // sales
 		res, err = db.Exec(`UPDATE sales SET is_handed_over = TRUE, handed_over_at = ? WHERE sale_id = ?`, timeNowStr, admin_update.SaleId)
 		if err != nil {
 			log.Printf("%s", err)
 			return c.String(http.StatusInternalServerError, "internal server error")
 		}
+    // recieve_ids
+		res, err = db.Exec(`UPDATE recieve_ids SET sale_id = NULL, available = TRUE, updated_at = ? WHERE sale_id = ?`, timeNowStr, admin_update.SaleId)
+		if err != nil {
+			log.Printf("%s", err)
+			return c.String(http.StatusInternalServerError, "internal server error")
+		}
 	} else if admin_update.Kind == "canceled" {
+    // sales
 		res, err = db.Exec(`UPDATE sales SET is_canceled = TRUE, canceled_at = ? WHERE sale_id = ?`, timeNowStr, admin_update.SaleId)
 		if err != nil {
 			log.Printf("%s", err)
 			return c.JSON(http.StatusInternalServerError, "internal server error")
 		}
+    // recieve_ids
+		res, err = db.Exec(`UPDATE recieve_ids SET sale_id = NULL, available = TRUE, updated_at = ? WHERE sale_id = ?`, timeNowStr, admin_update.SaleId)
+		if err != nil {
+			log.Printf("%s", err)
+			return c.String(http.StatusInternalServerError, "internal server error")
+		}
 	}
-	log.Printf("%v", res)
+  _ = res
   return c.JSON(http.StatusOK, MessageJson{ Message: "Success" })
 }
 
@@ -389,16 +436,28 @@ func post_admin_orders_handler(c echo.Context) error {
   var maxSaleIds = MaxSaleId{}
   err = db.Get(&maxSaleIds, `SELECT MAX(sale_id) FROM sales`)
 	if err != nil {
-		log.Printf("couldn't select max %s", err)
+    log.Printf("couldn't select max: %s", err)
     var cntSaleIds = CntSaleId{}
     err = db.Get(&cntSaleIds, `SELECT COUNT(sale_id) FROM sales`)
     if err != nil {
+      log.Printf("couldn't select cnt: %s", err)
       return c.String(http.StatusInternalServerError, "internal server error")
     }
-    log.Printf("cnt %+v", cntSaleIds.Id)
+    if cntSaleIds.Id != 0 {
+      log.Println("cnt is not zero")
+      return c.String(http.StatusInternalServerError, "internal server error")
+    }
 	}
+  var bestRecieveId = RecieveId{}
+  err = db.Get(&bestRecieveId, `SELECT id FROM recieve_ids WHERE available ORDER BY updated_at LIMIT 1`)
+  if err != nil {
+    log.Printf("couldn't select recieveId: %s", err)
+    return c.String(http.StatusInternalServerError, "internal server error")
+  }
+  recieveId := bestRecieveId.Id
   saleId := maxSaleIds.Id + 1
-	log.Printf("%+v", saleId)
+  log.Printf("recieveId, saleId: %s, %s", recieveId, saleId)
+  log.Println("hello")
 	// common column
 	timeNow := time.Now()
 	var sales []Sale
@@ -413,12 +472,18 @@ func post_admin_orders_handler(c echo.Context) error {
 			})
 		}
 	}
+  _, err = db.Exec(`UPDATE recieve_ids SET available = FALSE, sale_id = ? WHERE id = ?`, saleId, recieveId)
+  if err != nil {
+    log.Printf("%s", err)
+    return c.String(http.StatusInternalServerError, "internal server error")
+  }
+
 	_, err = db.NamedExec(sql, sales)
 	if err != nil {
 		log.Printf("%s", err)
 		return c.String(http.StatusInternalServerError, "internal server error")
 	}
-  return c.JSON(http.StatusOK, MessageJson{ Message: fmt.Sprintf("%d", saleId) })
+  return c.JSON(http.StatusOK, MessageJson{ Message: fmt.Sprintf("%d", recieveId) })
 }
 
 func get_graph_data_day1(c echo.Context) error {
