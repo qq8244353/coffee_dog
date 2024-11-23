@@ -12,7 +12,7 @@ import GetBaseURL from '../utils/GetBaseURL';
 function OrderAlign({name, endpoint}) {
   const [ orders, setOrders ] = useState([])
   const [ ordersPending, setOrdersPending ] = useState(true)
-  useEffect(() => {
+  const loadData = () => {
     fetch(`${GetBaseURL()}/${endpoint}`)
     .then(res => {
       return res.json()
@@ -26,7 +26,16 @@ function OrderAlign({name, endpoint}) {
     .catch(err => {
       console.log(err)
     })
+  }
+  useEffect(() => {
+    loadData()
   }, [])
+
+  setInterval(() => {
+    console.log('loaded')
+    loadData()
+  }, 10000);
+
   return (
     <Box
       cx={{

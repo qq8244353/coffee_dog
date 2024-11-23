@@ -48,6 +48,11 @@ export default function Admin() {
     })
   }
 
+  setInterval(() => {
+    console.log('admin loaded')
+    loadData()
+  }, 10000);
+
   return (
     <>
       <Header />
